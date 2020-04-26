@@ -26,6 +26,7 @@ void HardwareInf::startHardware(QString port, int baudRate) {
     serial->setPort(serialPort);
     serial->setBaudRate(baudRate);
     _stopHardware = false;
+
     if ( !isRunning() )
         start();
 }
@@ -44,11 +45,13 @@ QStringList HardwareInf::getInterfaces() {
 }
 
 void HardwareInf::sendData(QString data){
+    m_mutex.lock();
+    waitToSend = true;
     m_txData = data;
+    m_mutex.unlock();
 }
 
 void HardwareInf::processUpdate(QString data) {
-    qDebug() << data << endl;
     bool nameOk = false;
     QString name = "";
     bool on = false;
@@ -61,8 +64,8 @@ void HardwareInf::processUpdate(QString data) {
         return;
 
     name = axisData.at(0);
-    for ( QString aName: axisNames ) {
-        if ( name.compare(aName) == 0 ){
+    for ( const QString axisName: settings->axisNames() ) {
+        if ( name.compare(axisName) == 0 ){
             nameOk = true;
             break;
         }
@@ -101,19 +104,20 @@ void HardwareInf::run() {
     // Serial port read loop, emit signal when data read complete.
     m_txData = "";
     while( !_stopHardware ) {
-        m_mutex.lock();
         if ( m_txData.length() != 0 ) {
+            m_mutex.lock();
             serial->write(m_txData.toUtf8());
             serial->waitForBytesWritten(100);
             m_txData = "";
+            waitToSend = false;
+            m_mutex.unlock();
         }
-        m_mutex.unlock();
+
         if ( serial->waitForReadyRead(readTimeout) ) {
             rawData = serial->readAll();
             QStringList axisData(rawData.split("|"));
 
             foreach ( QString data, axisData ) {
-                //qDebug() << data << endl;
                  if ( data.trimmed().isEmpty() )
                         continue;
 

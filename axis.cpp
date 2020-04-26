@@ -51,12 +51,13 @@ void Axis::setSelected(bool selected)
 
 void Axis::setValue(double value, bool isSiUnits)
 {
+    _absValue = value;
+
     if ( getSelected() ) {
         lcdReadout->display("SEL");
         return;
     }
 
-    _absValue = value;
     _value = value - _zero;
     _isSiUnits = isSiUnits;
 

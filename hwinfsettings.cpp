@@ -6,6 +6,8 @@
 #include <QVBoxLayout>
 #include <QSpacerItem>
 #include <QLabel>
+#include <QCheckBox>
+#include <QDebug>
 
 HwInfSettings::HwInfSettings(DROSettings *settings, HardwareInf *hwInf, QWidget *parent)
     :QAppWindow(parent, settings)
@@ -36,17 +38,30 @@ void HwInfSettings::exitWindow() {
     close();
 }
 
-QString HwInfSettings::open(QString *portName, int *baudRate) {
+QString HwInfSettings::open(QString *portName, int *baudRate, bool *enableUpdated) {
     this->portName = portName;
     this->baudRate = baudRate;
+    this->enableUpdated = enableUpdated;
+    *this->enableUpdated = false;
 
     QHBoxLayout *mainLayout = new QHBoxLayout();
+    QVBoxLayout *cbLayout = new QVBoxLayout();
 
-    QSpacerItem *mainLeftSpacer = new QSpacerItem(5, 25, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    cbList = new QHash<QString, QCheckBox *>;
+    foreach( const QString axisName, settings->axisNames() ) {
+        QCheckBox *cbAxis = new QCheckBox(axisName);
+        cbList->insert(axisName, cbAxis);
+        connect(cbAxis, SIGNAL(clicked(bool)), this, SLOT(handleAxisChecked(bool)));
+        cbLayout->addWidget(cbAxis);
+    }
+
+    mainLayout->addItem(cbLayout);
+
+    QSpacerItem *mainLeftSpacer = new QSpacerItem(5, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
     mainLayout->addItem(mainLeftSpacer);
 
     QVBoxLayout *listsLayout = new QVBoxLayout();
-    QSpacerItem *listsTopSpacer = new QSpacerItem(5, 25, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    QSpacerItem *listsTopSpacer = new QSpacerItem(5, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
     listsLayout->addItem(listsTopSpacer);
 
     QVBoxLayout *portNamesLayout = new QVBoxLayout();
@@ -91,13 +106,28 @@ QString HwInfSettings::open(QString *portName, int *baudRate) {
     baudRatesLayout->addWidget(listBaudRates);
     listsLayout->addItem(baudRatesLayout);
 
-    QSpacerItem *listsBotSpacer = new QSpacerItem(5, 25, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    QSpacerItem *listsBotSpacer = new QSpacerItem(5, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
     listsLayout->addItem(listsBotSpacer);
 
     mainLayout->addItem(listsLayout);
-    QSpacerItem *mainRightSpacer = new QSpacerItem(5, 25, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    QSpacerItem *mainRightSpacer = new QSpacerItem(5, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
     mainLayout->addItem(mainRightSpacer);
     showWindow(mainLayout, "Hardware Settings");
     exec();
     return *error;
+}
+
+void HwInfSettings::handleAxisChecked(bool checked)
+{
+    QCheckBox *cbTmp = dynamic_cast< QCheckBox *>(QObject::sender());
+
+    if ( *enableUpdated != true )
+        *enableUpdated = false;
+
+    foreach ( const QString axisName, settings->axisNames() ){
+        if ( cbList->value(axisName) == cbTmp ) {
+            *enableUpdated = true;
+            settings->setAxisEnabled(axisName, checked);
+        }
+    }
 }

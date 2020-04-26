@@ -6,21 +6,52 @@ DROSettings::DROSettings(QString settingsPath)
     activeIconPath = QDir::cleanPath(skinCurrentDirPath + QDir::separator() + "active.png");
     inactiveIconPath = QDir::cleanPath(skinCurrentDirPath + QDir::separator() + "inactive.png");
 }
-DROSettings::~DROSettings(){
+
+DROSettings::~DROSettings()
+{
 
 }
-void DROSettings::setHwInfSerialName(QString name) {
+
+void DROSettings::setHwInfSerialName(QString name)
+{
     setKeyValue(SIMPLEDRO_CONFIG, "hwInfSerialName", name);
 }
+QStringList DROSettings::axisNames()
+{
+    QStringList ls;
+    if ( getAxisEnabled(XAXIS_NAME) )
+        ls.append(XAXIS_NAME);
 
-QString DROSettings::getHwInfSerialName() {
+    if ( getAxisEnabled(YAXIS_NAME) )
+        ls.append(YAXIS_NAME);
+
+    if ( getAxisEnabled(ZAXIS_NAME) )
+        ls.append(ZAXIS_NAME);
+
+    return ls;
+}
+
+QString DROSettings::getHwInfSerialName()
+{
     return getValue(SIMPLEDRO_CONFIG, "hwInfSerialName", "").toString();
 }
 
-void DROSettings::setHwInfSerialBaudRate(int baudRate) {
+void DROSettings::setHwInfSerialBaudRate(int baudRate)
+{
     setKeyValue(SIMPLEDRO_CONFIG, "hwInfBaudRate", baudRate);
 }
 
-int DROSettings::getHwInfSerialBaudRate() {
+int DROSettings::getHwInfSerialBaudRate()
+{
     return getValue(SIMPLEDRO_CONFIG, "hwInfBaudRate", 115200).toInt();
+}
+
+void DROSettings::setAxisEnabled(QString axisName, bool enabled)
+{
+    setKeyValue(SIMPLEDRO_CONFIG, QString("%1Enabled").arg(axisName), enabled);
+}
+
+bool DROSettings::getAxisEnabled(QString axisName)
+{
+    return getValue(SIMPLEDRO_CONFIG, QString("%1Enabled").arg(axisName), false).toBool();
 }

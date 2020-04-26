@@ -24,6 +24,7 @@ private:
     QHash<QString, Axis *>              *axisReadouts;
     QPushButton                         *btnSiUnits;
     bool                                isSiUnits = true;
+    void                                enableAxes();
 
 public slots:
     void                                updateDro(QString name, bool on, double value, QString units);

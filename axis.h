@@ -7,7 +7,6 @@
 #include <QLCDNumber>
 #include <QWidget>
 
-#define XAXIS
 class Axis : public QObject
 {
     Q_OBJECT

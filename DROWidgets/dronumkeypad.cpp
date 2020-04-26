@@ -23,13 +23,16 @@ QString DRONumKeypad::getKeypadValue()
 void DRONumKeypad::createUi()
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
+    mainLayout->setMargin(0);
     lcdKeypad = new QLCDNumber();
 
     lcdKeypad->setDigitCount(MAX_DIGITS);
     lcdKeypad->setSegmentStyle(QLCDNumber::Flat);
+    lcdKeypad->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
+    lcdKeypad->setMinimumHeight(40);
     mainLayout->addWidget(lcdKeypad);
 
-    QVBoxLayout *keypadLayout = new QVBoxLayout();
+    //QVBoxLayout *keypadLayout = new QVBoxLayout();
     QStringList keyValues({"7", "8", "9", "4", "5", "6", "1", "2", "3", "0", KEY_DEC, KEY_NEG, KEY_BAK, KEY_CLR, KEY_ENT});
     int colLength = 4;
     int rowLength = keyValues.length() / colLength;
@@ -44,17 +47,17 @@ void DRONumKeypad::createUi()
 
         for ( int j = 0; j < rowLength; j++ ){
             QPushButton *btn = new QPushButton(keyValues.at(i+j));
-            btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+            btn->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
             connect(btn, SIGNAL(clicked()), this, SLOT(handleKeyPress()));
             row->addWidget(btn);
         }
 
-        keypadLayout->addItem(row);
+        mainLayout->addItem(row);
     }
-    gbKeypad = new QGroupBox();
-    gbKeypad->setLayout(keypadLayout);
-    gbKeypad->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    mainLayout->addWidget(gbKeypad);
+    //gbKeypad = new QGroupBox();
+    //gbKeypad->setLayout(keypadLayout);
+    //gbKeypad->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+    //mainLayout->addWidget(gbKeypad);
 
     //shSpacer = new QSpacerItem(5, 5, QSizePolicy::Maximum, QSizePolicy::Maximum);
     //mainLayout->addItem(shSpacer);

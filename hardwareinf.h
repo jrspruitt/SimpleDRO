@@ -7,10 +7,6 @@
 #include <QtSerialPort/QSerialPort>
 #include "drosettings.h"
 
-#define XAXIS_ENABLE       "X"
-#define YAXIS       "Y"
-#define ZAXIS       "Z"
-
 class HardwareInf : public QThread
 {
     Q_OBJECT
@@ -21,6 +17,7 @@ public:
     void                    stopHardware();                     // Stop thread from running.
     QStringList             getInterfaces();
     void                    sendData(QString data);
+    bool                    waitToSend = false;
 
 private:
     void                    run() override;

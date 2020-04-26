@@ -30,17 +30,13 @@ SimpleDRO::SimpleDRO(QString skinName, QWidget *parent) :
         hwInf->startHardware();
 
     connect(hwInf, SIGNAL(positionUpdate(QString, bool, double, QString)), this, SLOT(updateDro(QString, bool, double, QString)));
-/*
-    axisList = new QHash<QString, Axis *>;
 
-    for ( int i = 0; i < axesNames.length(); i++ )
-        axisList->insert(axesNames.at(i), new Axis(axesNames[i], hwInf, settings));
-*/
     axisReadouts = new QHash<QString, Axis *>;
-    foreach (const QString axisName, axisNames)
+    foreach ( const QString axisName, settings->axisNames() )
         axisReadouts->insert(axisName, new Axis(axisName));
 
     createUi();
+    enableAxes();
 }
 
 SimpleDRO::~SimpleDRO()
@@ -59,7 +55,7 @@ void SimpleDRO::createUi()
 
     QVBoxLayout *readoutLayout = new QVBoxLayout();
 
-    foreach ( const QString axisName, axisNames ) {
+    foreach ( const QString axisName, settings->axisNames() ) {
         readoutLayout->addWidget(axisReadouts->value(axisName)->axisReadout());
     }
     droLayout->addItem(readoutLayout);
@@ -110,14 +106,34 @@ void SimpleDRO::updateMessage(QString message )
     lblMessage->setText(message);
 }
 
+void SimpleDRO::enableAxes()
+{
+    int ms = 500;
+    struct timespec ts = {ms / 1000, (ms % 1000) * 1000 * 1000};
+    foreach ( const QString axisName, settings->axisNames() ) {
+        qDebug() << axisName << "enabling" << endl;
+        while ( hwInf->waitToSend ) {
+            qDebug() << "wait" << endl;
+            nanosleep(&ts, NULL);
+        }
+        if ( settings->getAxisEnabled(axisName) )
+            hwInf->sendData(QString("#%1").arg(axisName.toLower()));
+        else
+            hwInf->sendData(QString("#%1").arg(axisName.toUpper()));
+    }
+}
+
 void SimpleDRO::handleHwSettings()
 {
     QString *portName = new QString("");
     int *baudRate = new int(0);
+    bool *enableUpdated = new bool();
 
     HwInfSettings *hwInfSettings = new HwInfSettings(settings, hwInf);
-    QString error = hwInfSettings->open(portName, baudRate);
-    qDebug() << error << error.compare("") << endl;
+    QString error = hwInfSettings->open(portName, baudRate, enableUpdated);
+
+    if ( *enableUpdated )
+        enableAxes();
 
     if ( portName->compare(PORTNAME_NOTSET) != 0 && *baudRate != BAUDRATE_NOTSET && error.compare("") == 0 ) {
         settings->setHwInfSerialName(*portName);
@@ -141,8 +157,7 @@ void SimpleDRO::handleSiUnits()
 
 void SimpleDRO::handleKeyPressEnter(QString value)
 {
-    qDebug() << "#######################" << endl;
-    foreach ( const QString name, axisNames ) {
+    foreach ( const QString name, settings->axisNames() ) {
         if ( axisReadouts->value(name)->getSelected() ) {
             axisReadouts->value(name)->setOffset(value.toDouble());
             axisReadouts->value(name)->setSelected(false);

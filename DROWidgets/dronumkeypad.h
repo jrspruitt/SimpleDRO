@@ -10,7 +10,7 @@
 
 #define KEY_DEC         "."
 #define KEY_NEG         "+/-"
-#define KEY_BAK         "Backspace"
+#define KEY_BAK         "Back"
 #define KEY_CLR         "CLR"
 #define KEY_ENT         "Enter"
 /*

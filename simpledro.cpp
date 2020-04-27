@@ -92,8 +92,7 @@ void SimpleDRO::createUi()
 
 void SimpleDRO::updateDro(QString name, bool on, double value, QString units)
 {
-    if ( !on )
-        return;
+    axisReadouts->value(name)->setDisabled(!on);
 
     if ( units.compare(UNITS_SI) == 0 && !isSiUnits )
         value = value / 25.4;
@@ -112,10 +111,14 @@ void SimpleDRO::enableAxes()
 {
     foreach ( const QString axisName, settings->axisNames() ) {
         if ( hwInf->waitToSend(500) ) {
-            if ( settings->getAxisEnabled(axisName) )
+            if ( settings->getAxisEnabled(axisName) ) {
                 hwInf->sendData(QString("#%1").arg(axisName.toLower()));
-            else
+                axisReadouts->value(axisName)->show();
+
+            } else {
                 hwInf->sendData(QString("#%1").arg(axisName.toUpper()));
+                axisReadouts->value(axisName)->hide();
+            }
         }
     }
 }
@@ -128,20 +131,41 @@ void SimpleDRO::handleHwConfig()
 
     HwInfConfig *hwInfConfig = new HwInfConfig(settings, hwInf);
     QString error = hwInfConfig->open(portName, baudRate, enableUpdated);
-    qDebug() << *enableUpdated << endl;
-    if ( *enableUpdated )
-        enableAxes();
 
-    if ( portName->compare(PORTNAME_NOTSET) != 0 && *baudRate != BAUDRATE_NOTSET && error.compare("") == 0 ) {
-        hwInf->stopHardware();
-        settings->setHwInfSerialName(*portName);
-        settings->setHwInfSerialBaudRate(*baudRate);
-        hwInf->startHardware();
+    QAppInfoDialog *infoDialog = new QAppInfoDialog(settings);
+    QString status = "";
+    QString msg = "";
+
+    if ( error.isEmpty() ) {
+        if ( portName->compare(PORTNAME_NOTSET) != 0 && *baudRate != BAUDRATE_NOTSET ) {
+            status = "Updated";
+            if ( settings->getHwInfSerialName().compare(*portName) != 0 || settings->getHwInfSerialName().compare(*portName) != 0 ) {
+                hwInf->stopHardware();
+                settings->setHwInfSerialName(*portName);
+                settings->setHwInfSerialBaudRate(*baudRate);
+                hwInf->startHardware();
+                msg = "Hardware configuration set.\n";
+            }
+
+            if ( *enableUpdated ) {
+                enableAxes();
+                msg += "Axes configuration updated.";
+            }
+
+        } else {
+            status = "Warning";
+            msg = "Hardware not configured.";
+        }
 
     } else {
-        QAppInfoDialog *infoDialog = new QAppInfoDialog(settings);
-        infoDialog->showWindow(error, "Error", 2);
+        status = "Error";
+        msg = error;
     }
+
+    if ( msg.compare("") != 0 )
+        infoDialog->showWindow(msg, status, 2);
+
+
 }
 
 void SimpleDRO::handleSiUnits()
@@ -183,8 +207,6 @@ void SimpleDRO::handleHwInfChange(int state)
             break;
 
         case STATE_RUNNING:
-            foreach ( const QString axisName, settings->axisNames() )
-                axisReadouts->value(axisName)->setDisabled(false);
             status = "Connected";
             msg = "Hardware is running.";
             while(! hwInf->isRunning() ) continue;

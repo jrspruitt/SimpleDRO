@@ -20,6 +20,7 @@ void DROSettings::setHwInfSerialName(QString name)
 
 QStringList DROSettings::axisNames()
 {
+    return axisAllNames();
     QStringList ls;
     if ( getAxisEnabled(XAXIS_NAME) )
         ls.append(XAXIS_NAME);

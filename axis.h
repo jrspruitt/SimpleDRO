@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QLCDNumber>
 #include <QWidget>
+#include <QPushButton>
 
 class Axis : public QObject
 {
@@ -24,16 +25,21 @@ public:
     void            setSelected(bool selected);
     bool            getDisabled();
     void            setDisabled(bool disabled);
+    void            show();
+    void            hide();
 
 private:
     QLCDNumber      *lcdReadout;
+    QPushButton     *btnZero;
+    QPushButton     *btnSelect;
+    QWidget         *mainWidget;
     QString         _axisName;
-    double          _value;
+    double          _value = 0;
     double          _absValue = 0;
     double          _zero = 0;
     bool            _isSiUnits = true;
     bool            _isSelected = false;
-    bool            _isDisabled = false;
+    bool            _isDisabled = true;
 
 signals:
 

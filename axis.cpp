@@ -9,30 +9,44 @@
 Axis::Axis(QString axisName, QObject *parent) : QObject(parent)
 {
     this->_axisName = axisName;
-    lcdReadout = new QLCDNumber();
-    lcdReadout->setDigitCount(7);
-    lcdReadout->setSegmentStyle(QLCDNumber::Flat);
-    lcdReadout->display("OFF");
+    setZero(0);
+    setOffset(0);
 }
 
 QWidget * Axis::axisReadout()
 {
-    QWidget *mainWidget = new QWidget();
+    mainWidget = new QWidget();
     QHBoxLayout *mainLayout = new QHBoxLayout();
-    mainLayout->addWidget(lcdReadout);
+    lcdReadout = new QLCDNumber(mainWidget);
+    lcdReadout->setDigitCount(7);
+    lcdReadout->setSegmentStyle(QLCDNumber::Flat);
+    lcdReadout->display("OFF");
+    lcdReadout->setDisabled(true);
+     mainLayout->addWidget(lcdReadout);
 
-    QPushButton *btnZero = new QPushButton(QString("%1/0").arg(_axisName));
+    btnZero = new QPushButton(QString("%1/0").arg(_axisName), mainWidget);
     btnZero->setFixedSize(40, 40);
     connect(btnZero, SIGNAL(clicked()), this, SLOT(handleAxisZero()));
+    btnZero->setDisabled(true);
     mainLayout->addWidget(btnZero);
 
-    QPushButton *btnSelect = new QPushButton(_axisName);
+    btnSelect = new QPushButton(_axisName, mainWidget);
     btnSelect->setFixedSize(40, 40);
     connect(btnSelect, SIGNAL(clicked()), this, SLOT(handleAxisSelect()));
+    btnSelect->setDisabled(true);
     mainLayout->addWidget(btnSelect);
 
     mainWidget->setLayout(mainLayout);
+    mainWidget->hide();
     return mainWidget;
+}
+void Axis::show()
+{
+    mainWidget->show();
+}
+void Axis::hide()
+{
+    mainWidget->hide();
 }
 
 QString Axis::getName()
@@ -48,20 +62,18 @@ bool Axis::getSelected()
 void Axis::setSelected(bool selected)
 {
     _isSelected = selected;
+    if ( _isSelected )
+        lcdReadout->display("SEL");
 }
 
 void Axis::setValue(double value, bool isSiUnits)
 {
     _absValue = value;
 
-    if ( getSelected() ) {
-        lcdReadout->display("SEL");
+    if ( getSelected() )
         return;
-
-    } else if ( getDisabled() ) {
-        lcdReadout->display("OFF");
+    else if ( getDisabled() )
         return;
-    }
 
     _value = value - _zero;
     _isSiUnits = isSiUnits;
@@ -99,9 +111,16 @@ double Axis::getAbsValue()
 
 void Axis::setDisabled(bool disabled)
 {
+    if ( _isDisabled == disabled )
+        return;
+
     _isDisabled = disabled;
     if ( _isDisabled )
         lcdReadout->display("OFF");
+
+    lcdReadout->setDisabled(disabled);
+    btnZero->setDisabled(disabled);
+    btnSelect->setDisabled(disabled);
 }
 
 bool Axis::getDisabled()

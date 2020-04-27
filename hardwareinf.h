@@ -5,7 +5,14 @@
 #include <QThread>
 #include <QMutex>
 #include <QtSerialPort/QSerialPort>
+#include <QSerialPortInfo>
 #include "drosettings.h"
+
+#define STATE_STOPPED           0
+#define STATE_CONNECTING        1
+#define STATE_RUNNING           2
+#define STATE_ERROR             3
+#define STATE_WAITING           4
 
 class HardwareInf : public QThread
 {
@@ -13,11 +20,14 @@ class HardwareInf : public QThread
 
 public:
     explicit                HardwareInf(DROSettings *settings, QObject *parent = nullptr);
-    void                    startHardware(const QString port = "", int baudRate = 0);  // Start thread using given serial port name.
+    bool                    startHardware();  // Start thread using given serial port name.
     void                    stopHardware();                     // Stop thread from running.
     QStringList             getInterfaces();
     void                    sendData(QString data);
-    bool                    waitToSend = false;
+    bool                    waitToSend(int ms);
+    bool                    isInfAvailable(QString portName);
+    QString                 getError();
+    int                     getState();
 
 private:
     void                    run() override;
@@ -28,9 +38,17 @@ private:
     QMutex                  m_mutex;
     QString                 m_txData = "";
     void                    processUpdate(QString data);
+    QSerialPortInfo         *portInfo;
+    QString                 _error;
+    bool                    _waitToSend = false;
+    bool                    _first = true;
+    int                     _curState = 0;
+    void                    handleStateChange(int state);
 
 signals:
     void                    positionUpdate(QString name, bool on, double value, QString units); // Connect main app to this signal to get position data updates.
+    void                    stateChange(int state);
+
 };
 
 #endif // HARDWAREINF_H

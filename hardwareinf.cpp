@@ -4,38 +4,72 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QMutexLocker>
-#include <QtDebug>
+#include <QTimer>
+#include <QDebug>
 
 HardwareInf::HardwareInf(DROSettings *settings, QObject *parent)
 {
     this->settings = settings;
     serial = new QSerialPort;
+    _error = "";
+    _curState = STATE_STOPPED;
 }
 
-void HardwareInf::startHardware(QString port, int baudRate) {
+QString HardwareInf::getError()
+{
+    QString err = _error;
+    _error = "";
+    return err;
+}
+
+int HardwareInf::getState()
+{
+    return _curState;
+}
+
+bool HardwareInf::startHardware()
+{
     _stopHardware = true;
     const QMutexLocker locker(&m_mutex);
+    QString portName = settings->getHwInfSerialName();
+    int baudRate = settings->getHwInfSerialBaudRate();
 
-    if ( port.compare("") == 0 )
-        port = settings->getHwInfSerialName();
+    if ( portName.compare("") == 0 || baudRate == 0 ) {
+        _error = "Interface not configured properly.";
+        handleStateChange(STATE_ERROR);
+        return false;
+    }
 
-    if ( baudRate == 0 )
-        baudRate = settings->getHwInfSerialBaudRate();
-
-    QSerialPortInfo serialPort(port);
-    serial->setPort(serialPort);
-    serial->setBaudRate(baudRate);
-    _stopHardware = false;
-
-    if ( !isRunning() )
+    if ( !isInfAvailable(portName) ) {
+        _error = "Hardware not available.\n Please plug in device.";
+        _stopHardware = false;
+        handleStateChange(STATE_WAITING);
         start();
+        return false;
+    }
+
+    try {
+        QSerialPortInfo serialPort(portName);
+        serial->setPort(serialPort);
+        serial->setBaudRate(baudRate);
+        _stopHardware = false;
+        handleStateChange(STATE_CONNECTING);
+        start();
+        return true;
+
+    } catch (...) {
+        _error = "Could not config interface.";
+        return false;
+    }
 }
 
-void HardwareInf::stopHardware() {
+void HardwareInf::stopHardware()
+{
     _stopHardware = true;
 }
 
-QStringList HardwareInf::getInterfaces() {
+QStringList HardwareInf::getInterfaces()
+{
     QStringList portNames;
 
     foreach (const QSerialPortInfo &inf, QSerialPortInfo::availablePorts())
@@ -44,14 +78,42 @@ QStringList HardwareInf::getInterfaces() {
     return portNames;
 }
 
-void HardwareInf::sendData(QString data){
-    m_mutex.lock();
-    waitToSend = true;
-    m_txData = data;
-    m_mutex.unlock();
+bool HardwareInf::isInfAvailable(QString portName)
+{
+    QStringList infList = getInterfaces();
+    for ( int i = 0; i < infList.length(); i++ ) {
+        if ( portName.compare(infList[i]) == 0 )
+            return true;
+    }
+    return false;
 }
 
-void HardwareInf::processUpdate(QString data) {
+void HardwareInf::sendData(QString data)
+{
+    if ( isRunning() ) {
+        m_mutex.lock();
+        _waitToSend = true;
+        m_txData = data;
+        m_mutex.unlock();
+    }
+}
+
+bool HardwareInf::waitToSend(int ms)
+{
+    if ( !_waitToSend )
+        return true;
+
+    struct timespec ts = {ms / 1000, (ms % 1000) * 1000 * 1000};
+    nanosleep(&ts, nullptr);
+
+    if ( !_waitToSend )
+        return true;
+
+    return false;
+}
+
+void HardwareInf::processUpdate(QString data)
+{
     bool nameOk = false;
     QString name = "";
     bool on = false;
@@ -64,7 +126,7 @@ void HardwareInf::processUpdate(QString data) {
         return;
 
     name = axisData.at(0);
-    for ( const QString axisName: settings->axisNames() ) {
+    foreach ( const QString axisName, settings->axisNames() ) {
         if ( name.compare(axisName) == 0 ){
             nameOk = true;
             break;
@@ -92,43 +154,69 @@ void HardwareInf::processUpdate(QString data) {
     emit positionUpdate(name, on, value, units);
 }
 
-void HardwareInf::run() {
+void HardwareInf::run()
+{
     QString rawData = "";
-
-    // Open serial port for reading.
-    if ( !serial->open(QIODevice::ReadWrite) ) {
-         qDebug() << "Serial Port Error:" << serial->error()  << endl;
-         _stopHardware = true;
-    }
-
-    // Serial port read loop, emit signal when data read complete.
-    m_txData = "";
     while( !_stopHardware ) {
-        if ( m_txData.length() != 0 ) {
-            m_mutex.lock();
-            serial->write(m_txData.toUtf8());
-            serial->waitForBytesWritten(100);
-            m_txData = "";
-            waitToSend = false;
-            m_mutex.unlock();
-        }
+        switch ( _curState ) {
+        case STATE_CONNECTING:
+            if ( serial->open(QIODevice::ReadWrite) )
+                handleStateChange(STATE_RUNNING);
+            else
+                _error = serial->errorString();
+            break;
 
-        if ( serial->waitForReadyRead(readTimeout) ) {
-            rawData = serial->readAll();
-            QStringList axisData(rawData.split("|"));
+        case STATE_RUNNING:
 
-            foreach ( QString data, axisData ) {
-                 if ( data.trimmed().isEmpty() )
-                        continue;
+            if ( m_txData.length() != 0 ) {
+                m_mutex.lock();
+                serial->write(m_txData.toUtf8());
+                serial->waitForBytesWritten(100);
+                m_txData = "";
+                _waitToSend = false;
+                m_mutex.unlock();
+            }
 
-                if ( data.compare("NO") != 0 && data.compare("OK") != 0) {
-                    processUpdate(data);
+            if ( serial->waitForReadyRead(readTimeout) ) {
+                rawData = serial->readAll();
+                QStringList axisData(rawData.split("|"));
 
+                foreach ( const QString data, axisData ) {
+                    if ( data.trimmed().isEmpty() )
+                            continue;
+
+                    if ( data.compare("NO") != 0 && data.compare("OK") != 0)
+                        processUpdate(data);
+                }
+            } else {
+                switch (serial->error() ) {
+                    case QSerialPort::TimeoutError:
+                        break;
+                    case QSerialPort::ReadError:
+                        _error = "Hardware not available.\n Please plug in device.";
+                        serial->close();
+                        handleStateChange(STATE_WAITING);
+                        break;
+                    default:
+                        handleStateChange(STATE_ERROR);
                 }
             }
             serial->flush();
-        }
-    }
 
-    serial->close();
+            break;
+
+        case STATE_WAITING:
+            if ( isInfAvailable(settings->getHwInfSerialName()))
+                startHardware();
+
+        }// switch
+    }// while
+    handleStateChange(STATE_STOPPED);
+
+}
+
+void HardwareInf::handleStateChange(int state)
+{
+    _curState = state;
+    emit stateChange(_curState);
 }

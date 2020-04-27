@@ -16,7 +16,6 @@ SOURCES += \
         main.cpp \
         simpledro.cpp \
         hardwareinf.cpp \
-        hwinfsettings.cpp \
         axis.cpp \
         QAppWidgets/QAppKeyboard/qappkeyboard.cpp \
         QAppWidgets/QAppKeyboard/qapplineedit.cpp \
@@ -27,12 +26,12 @@ SOURCES += \
         QAppWidgets/qapplist.cpp \
         QAppWidgets/qappwindow.cpp \
     drosettings.cpp \
-    DROWidgets/dronumkeypad.cpp
+    DROWidgets/dronumkeypad.cpp \
+    hwinfconfig.cpp
 
 HEADERS += \
         simpledro.h \
         hardwareinf.h \
-        hwinfsettings.h \
         axis.h \
         QAppWidgets/QAppKeyboard/qappkeyboard.h \
         QAppWidgets/QAppKeyboard/qapplineedit.h \
@@ -43,6 +42,7 @@ HEADERS += \
         QAppWidgets/qapplist.h \
         QAppWidgets/qappwindow.h \
     drosettings.h \
-    DROWidgets/dronumkeypad.h
+    DROWidgets/dronumkeypad.h \
+    hwinfconfig.h
 target.path = /root
 INSTALLS += target

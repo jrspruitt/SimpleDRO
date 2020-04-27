@@ -1,6 +1,6 @@
 #include "simpledro.h"
 #include "drosettings.h"
-#include "hwinfsettings.h"
+#include "hwinfconfig.h"
 #include "axis.h"
 #include "DROWidgets/dronumkeypad.h"
 #include "QAppWidgets/qappinfodialog.h"
@@ -25,18 +25,18 @@ SimpleDRO::SimpleDRO(QString skinName, QWidget *parent) :
     setWindowFlags(Qt::FramelessWindowHint);
     setStyleSheet(settings->getStyleSheet());
 
-    hwInf = new HardwareInf(settings);
-    if ( settings->getHwInfSerialName().compare("") != 0 && settings->getHwInfSerialBaudRate() != 0 )
-        hwInf->startHardware();
-
-    connect(hwInf, SIGNAL(positionUpdate(QString, bool, double, QString)), this, SLOT(updateDro(QString, bool, double, QString)));
-
     axisReadouts = new QHash<QString, Axis *>;
     foreach ( const QString axisName, settings->axisNames() )
         axisReadouts->insert(axisName, new Axis(axisName));
 
     createUi();
-    enableAxes();
+
+    hwInf = new HardwareInf(settings);
+    connect(hwInf, SIGNAL(positionUpdate(QString, bool, double, QString)), this, SLOT(updateDro(QString, bool, double, QString)));
+    connect(hwInf, SIGNAL(stateChange(int)), this, SLOT(handleHwInfChange(int)));
+
+    if ( hwInf->startHardware() )
+        enableAxes();
 }
 
 SimpleDRO::~SimpleDRO()
@@ -55,9 +55,11 @@ void SimpleDRO::createUi()
 
     QVBoxLayout *readoutLayout = new QVBoxLayout();
 
-    foreach ( const QString axisName, settings->axisNames() ) {
+    foreach ( const QString axisName, settings->axisNames() )
         readoutLayout->addWidget(axisReadouts->value(axisName)->axisReadout());
-    }
+
+    QSpacerItem *readoutSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
+    readoutLayout->addItem(readoutSpacer);
     droLayout->addItem(readoutLayout);
 
     QSpacerItem *droSpacer = new QSpacerItem(10, 0, QSizePolicy::Maximum, QSizePolicy::Minimum);
@@ -75,7 +77,7 @@ void SimpleDRO::createUi()
     menuLayout->addWidget(btnSiUnits);
 
     QPushButton *btnHwSettings = new QPushButton("Hardware Settings");
-    connect(btnHwSettings, SIGNAL(clicked()), this, SLOT(handleHwSettings()));
+    connect(btnHwSettings, SIGNAL(clicked()), this, SLOT(handleHwConfig()));
     menuLayout->addWidget(btnHwSettings);
 
     QPushButton *btnClose = new QPushButton("Exit");
@@ -108,34 +110,30 @@ void SimpleDRO::updateMessage(QString message )
 
 void SimpleDRO::enableAxes()
 {
-    int ms = 500;
-    struct timespec ts = {ms / 1000, (ms % 1000) * 1000 * 1000};
     foreach ( const QString axisName, settings->axisNames() ) {
-        qDebug() << axisName << "enabling" << endl;
-        while ( hwInf->waitToSend ) {
-            qDebug() << "wait" << endl;
-            nanosleep(&ts, NULL);
+        if ( hwInf->waitToSend(500) ) {
+            if ( settings->getAxisEnabled(axisName) )
+                hwInf->sendData(QString("#%1").arg(axisName.toLower()));
+            else
+                hwInf->sendData(QString("#%1").arg(axisName.toUpper()));
         }
-        if ( settings->getAxisEnabled(axisName) )
-            hwInf->sendData(QString("#%1").arg(axisName.toLower()));
-        else
-            hwInf->sendData(QString("#%1").arg(axisName.toUpper()));
     }
 }
 
-void SimpleDRO::handleHwSettings()
+void SimpleDRO::handleHwConfig()
 {
     QString *portName = new QString("");
     int *baudRate = new int(0);
-    bool *enableUpdated = new bool();
+    bool *enableUpdated = new bool(false);
 
-    HwInfSettings *hwInfSettings = new HwInfSettings(settings, hwInf);
-    QString error = hwInfSettings->open(portName, baudRate, enableUpdated);
-
+    HwInfConfig *hwInfConfig = new HwInfConfig(settings, hwInf);
+    QString error = hwInfConfig->open(portName, baudRate, enableUpdated);
+    qDebug() << *enableUpdated << endl;
     if ( *enableUpdated )
         enableAxes();
 
     if ( portName->compare(PORTNAME_NOTSET) != 0 && *baudRate != BAUDRATE_NOTSET && error.compare("") == 0 ) {
+        hwInf->stopHardware();
         settings->setHwInfSerialName(*portName);
         settings->setHwInfSerialBaudRate(*baudRate);
         hwInf->startHardware();
@@ -163,6 +161,53 @@ void SimpleDRO::handleKeyPressEnter(QString value)
             axisReadouts->value(name)->setSelected(false);
         }
     }
+}
+
+void SimpleDRO::handleHwInfChange(int state)
+{
+    qDebug() << "State" << state << endl;
+    QString status = "";
+    QString msg = "";
+
+    switch ( state ) {
+        case STATE_ERROR:
+            foreach ( const QString axisName, settings->axisNames() )
+                axisReadouts->value(axisName)->setDisabled(true);
+            status = "Error";
+            msg = hwInf->getError();
+            break;
+
+        case STATE_CONNECTING:
+            status="Connecting";
+            msg = "Attempting to connect to hardware.";
+            break;
+
+        case STATE_RUNNING:
+            foreach ( const QString axisName, settings->axisNames() )
+                axisReadouts->value(axisName)->setDisabled(false);
+            status = "Connected";
+            msg = "Hardware is running.";
+            while(! hwInf->isRunning() ) continue;
+            enableAxes();
+            break;
+
+        case STATE_STOPPED:
+            foreach ( const QString axisName, settings->axisNames() )
+                axisReadouts->value(axisName)->setDisabled(true);
+            status = "Stopped";
+            msg = "Hardware has stopped running.";
+            break;
+
+        case STATE_WAITING:
+            foreach ( const QString axisName, settings->axisNames() )
+                axisReadouts->value(axisName)->setDisabled(true);
+            status = "Waiting";
+            msg = hwInf->getError();
+            break;
+    }
+
+    QAppInfoDialog *infoDialog = new QAppInfoDialog(settings);
+    infoDialog->showWindow(msg, status, 2);
 }
 
 Q_NORETURN

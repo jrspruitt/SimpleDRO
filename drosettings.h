@@ -27,6 +27,7 @@ public:
     QString                 activeIconPath;
     QString                 inactiveIconPath;
     QStringList             axisNames();
+    QStringList             axisAllNames();
 };
 
 #endif // SIMPLEDROSETTINGS_H

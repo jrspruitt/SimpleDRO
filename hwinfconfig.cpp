@@ -1,4 +1,4 @@
-#include "hwinfsettings.h"
+#include "hwinfconfig.h"
 #include "drosettings.h"
 #include "hardwareinf.h"
 #include "QAppWidgets/qapplist.h"
@@ -7,23 +7,24 @@
 #include <QSpacerItem>
 #include <QLabel>
 #include <QCheckBox>
+#include <QPushButton>
 #include <QDebug>
 
-HwInfSettings::HwInfSettings(DROSettings *settings, HardwareInf *hwInf, QWidget *parent)
+HwInfConfig::HwInfConfig(DROSettings *settings, HardwareInf *hwInf, QWidget *parent)
     :QAppWindow(parent, settings)
 {
     this->settings = settings;
     this->hwInf = hwInf;
-    error = new QString("");
+    this->strError = new QString("");
 }
 
-void HwInfSettings::exitWindow() {
+void HwInfConfig::exitWindow() {
     if ( listSerialPorts->currentRow() > 0 ) {
         *portName = listSerialPorts->currentItem()->text();
 
     } else {
         *portName = PORTNAME_NOTSET;
-        *error = PORTNAME_NOTSET_MSG;
+        *strError = QString(PORTNAME_NOTSET_MSG);
     }
 
     if ( listBaudRates->currentRow() > 0 ) {
@@ -31,31 +32,32 @@ void HwInfSettings::exitWindow() {
 
     } else {
         *baudRate = BAUDRATE_NOTSET;
-        *error += BAUDRATE_NOTSET_MSG;
+        *strError += QString(BAUDRATE_NOTSET_MSG);
     }
 
     hide();
     close();
 }
 
-QString HwInfSettings::open(QString *portName, int *baudRate, bool *enableUpdated) {
+QString HwInfConfig::open(QString *portName, int *baudRate, bool *enableUpdated) {
     this->portName = portName;
     this->baudRate = baudRate;
     this->enableUpdated = enableUpdated;
     *this->enableUpdated = false;
 
     QHBoxLayout *mainLayout = new QHBoxLayout();
-    QVBoxLayout *cbLayout = new QVBoxLayout();
+    QVBoxLayout *enableLayout = new QVBoxLayout();
+    QLabel *lblEnableSection = new QLabel("Enable Axes");
+    enableLayout->addWidget(lblEnableSection);
 
-    cbList = new QHash<QString, QCheckBox *>;
-    foreach( const QString axisName, settings->axisNames() ) {
-        QCheckBox *cbAxis = new QCheckBox(axisName);
-        cbList->insert(axisName, cbAxis);
-        connect(cbAxis, SIGNAL(clicked(bool)), this, SLOT(handleAxisChecked(bool)));
-        cbLayout->addWidget(cbAxis);
+    foreach( const QString axisName, settings->axisAllNames() ) {
+        QString btnText = settings->getAxisEnabled(axisName) ? "Enabled" : "Disabled";
+        QPushButton *btnAxis = new QPushButton(QString("%1 %2").arg(axisName).arg(btnText));
+        connect(btnAxis, SIGNAL(clicked()), this, SLOT(handleAxisEnabled()));
+        enableLayout->addWidget(btnAxis);
     }
 
-    mainLayout->addItem(cbLayout);
+    mainLayout->addItem(enableLayout);
 
     QSpacerItem *mainLeftSpacer = new QSpacerItem(5, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
     mainLayout->addItem(mainLeftSpacer);
@@ -114,20 +116,30 @@ QString HwInfSettings::open(QString *portName, int *baudRate, bool *enableUpdate
     mainLayout->addItem(mainRightSpacer);
     showWindow(mainLayout, "Hardware Settings");
     exec();
-    return *error;
+
+    return *strError;
 }
 
-void HwInfSettings::handleAxisChecked(bool checked)
+void HwInfConfig::handleAxisEnabled()
 {
-    QCheckBox *cbTmp = dynamic_cast< QCheckBox *>(QObject::sender());
+    QPushButton *btn = dynamic_cast< QPushButton *>(QObject::sender());
 
-    if ( *enableUpdated != true )
-        *enableUpdated = false;
+    foreach ( const QString axisName, settings->axisAllNames() ){
+        QString btnEn = QString("%1 %2").arg(axisName).arg("Enabled");
+        QString btnDis = QString("%1 %2").arg(axisName).arg("Disabled");
 
-    foreach ( const QString axisName, settings->axisNames() ){
-        if ( cbList->value(axisName) == cbTmp ) {
+        if ( btn->text().compare(btnEn) == 0 ) {
+            btn->setText(btnDis);
+            settings->setAxisEnabled(axisName, false);
             *enableUpdated = true;
-            settings->setAxisEnabled(axisName, checked);
+            break;
+
+        } else if ( btn->text().compare(btnDis) == 0 ) {
+            btn->setText(btnEn);
+            settings->setAxisEnabled(axisName, true);
+            *enableUpdated = true;
+            break;
         }
+
     }
 }

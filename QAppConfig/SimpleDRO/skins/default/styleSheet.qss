@@ -10,21 +10,27 @@ QLCDNumber {
 }
 
 DRONumKeypad QPushButton {
-    color:blue;
-    background-color:red;
-    border:0px;
+    color: rgb(0, 0, 0);
+    background-color:rgb(255, 0, 0);
+    border:1px solid rgb(255, 255, 255);
+    border-radius:3px;
+    margin:1px;
+}
+
+DRONumKeypad QPushButton::released {
+    color: rgb(0, 0, 0);
+    background-color:rgb(255, 0, 0);
+    border:1px solid rgb(255, 255, 255);
+    border-radius:3px;
+    margin:1px;
 }
 
 DRONumKeypad QPushButton::hover {
-    color:green;
-    background-color:blue;
-    border:0px;
-}
-
-DRONumKeypad QPushButton::pressed {
-    color:yellow;
-    background-color:darkblue;
-    border:0px;
+    color: rgb(0, 0, 0);
+    background-color:rgb(255, 50, 50);
+    border:1px solid rgb(255, 255, 255);
+    border-radius:3px;
+    margin:1px;
 }
 
 /* ---------------------- */

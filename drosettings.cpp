@@ -1,4 +1,5 @@
 #include "drosettings.h"
+#include <QDebug>
 
 DROSettings::DROSettings(QString settingsPath)
     :QAppBaseSettings (settingsPath)
@@ -16,6 +17,7 @@ void DROSettings::setHwInfSerialName(QString name)
 {
     setKeyValue(SIMPLEDRO_CONFIG, "hwInfSerialName", name);
 }
+
 QStringList DROSettings::axisNames()
 {
     QStringList ls;
@@ -29,6 +31,11 @@ QStringList DROSettings::axisNames()
         ls.append(ZAXIS_NAME);
 
     return ls;
+}
+
+QStringList DROSettings::axisAllNames()
+{
+    return QStringList({XAXIS_NAME, YAXIS_NAME, ZAXIS_NAME});
 }
 
 QString DROSettings::getHwInfSerialName()
@@ -48,6 +55,7 @@ int DROSettings::getHwInfSerialBaudRate()
 
 void DROSettings::setAxisEnabled(QString axisName, bool enabled)
 {
+    qDebug() << axisName << enabled << endl;
     setKeyValue(SIMPLEDRO_CONFIG, QString("%1Enabled").arg(axisName), enabled);
 }
 

@@ -31,7 +31,8 @@ public slots:
     void                                updateMessage(QString message);
 
 private slots:
-    void                                handleHwSettings();
+    void                                handleHwConfig();
+    void                                handleHwInfChange(int state);
     void                                handleSiUnits();
     void                                handleKeyPressEnter(QString value);
     void                                handleExit();

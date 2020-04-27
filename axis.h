@@ -22,15 +22,18 @@ public:
     void            setOffset(double value);
     bool            getSelected();
     void            setSelected(bool selected);
+    bool            getDisabled();
+    void            setDisabled(bool disabled);
 
 private:
     QLCDNumber      *lcdReadout;
     QString         _axisName;
     double          _value;
-    double          _absValue;
+    double          _absValue = 0;
     double          _zero = 0;
     bool            _isSiUnits = true;
     bool            _isSelected = false;
+    bool            _isDisabled = false;
 
 signals:
 

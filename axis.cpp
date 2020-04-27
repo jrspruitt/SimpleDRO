@@ -9,15 +9,16 @@
 Axis::Axis(QString axisName, QObject *parent) : QObject(parent)
 {
     this->_axisName = axisName;
+    lcdReadout = new QLCDNumber();
+    lcdReadout->setDigitCount(7);
+    lcdReadout->setSegmentStyle(QLCDNumber::Flat);
+    lcdReadout->display("OFF");
 }
 
 QWidget * Axis::axisReadout()
 {
     QWidget *mainWidget = new QWidget();
     QHBoxLayout *mainLayout = new QHBoxLayout();
-    lcdReadout = new QLCDNumber();
-    lcdReadout->setDigitCount(7);
-    lcdReadout->setSegmentStyle(QLCDNumber::Flat);
     mainLayout->addWidget(lcdReadout);
 
     QPushButton *btnZero = new QPushButton(QString("%1/0").arg(_axisName));
@@ -56,6 +57,10 @@ void Axis::setValue(double value, bool isSiUnits)
     if ( getSelected() ) {
         lcdReadout->display("SEL");
         return;
+
+    } else if ( getDisabled() ) {
+        lcdReadout->display("OFF");
+        return;
     }
 
     _value = value - _zero;
@@ -84,13 +89,24 @@ double Axis::getZero()
 
 void Axis::setOffset(double value)
 {
-    qDebug() << value << endl;
     setZero(getAbsValue() - value);
 }
 
 double Axis::getAbsValue()
 {
     return _absValue;
+}
+
+void Axis::setDisabled(bool disabled)
+{
+    _isDisabled = disabled;
+    if ( _isDisabled )
+        lcdReadout->display("OFF");
+}
+
+bool Axis::getDisabled()
+{
+    return _isDisabled;
 }
 
 void Axis::handleAxisZero()

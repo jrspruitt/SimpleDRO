@@ -15,28 +15,27 @@
 #define BAUDRATE_NOTSET         0
 #define BAUDRATE_NOTSET_MSG     " Baudrate not set."
 
-class HwInfSettings : public QAppWindow
+class HwInfConfig : public QAppWindow
 {
     Q_OBJECT
 public:
-    HwInfSettings(DROSettings *settings, HardwareInf *hwInf, QWidget *parent = nullptr);
+    HwInfConfig(DROSettings *settings, HardwareInf *hwInf, QWidget *parent = nullptr);
     using QAppWindow::open; // Turns off warning about overloading.
     QString                             open(QString *portName, int *baudRate, bool *enableUpdated);
     void                                exitWindow();
     QString                             *portName;
     int                                 *baudRate;
     bool                                *enableUpdated;
+    QString                             *strError;
 
 private:
     DROSettings                         *settings;
     HardwareInf                         *hwInf;
-    QHash<QString, QCheckBox *>         *cbList;
     QAppList                            *listSerialPorts;
     QAppList                            *listBaudRates;
-    QString                             *error;
 
 private slots:
-    void                        handleAxisChecked(bool checked);
+    void                                handleAxisEnabled();
 };
 
 #endif // HWINFSETTINGS_H

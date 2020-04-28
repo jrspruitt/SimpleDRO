@@ -12,6 +12,13 @@ Axis::Axis(QString axisName, QObject *parent) : QObject(parent)
     setOffset(0);
 }
 
+QString Axis::getName()
+{
+    return _axisName;
+}
+/*
+ * Display widget of Axis Readout.
+*/
 QWidget * Axis::axisReadout()
 {
     mainWidget = new QWidget();
@@ -39,6 +46,10 @@ QWidget * Axis::axisReadout()
     mainWidget->hide();
     return mainWidget;
 }
+
+/*
+ * Display and function mode settings.
+ */
 void Axis::show()
 {
     mainWidget->show();
@@ -48,14 +59,23 @@ void Axis::hide()
     mainWidget->hide();
 }
 
-QString Axis::getName()
+void Axis::setDisabled(bool disabled)
 {
-    return _axisName;
+    if ( _isDisabled == disabled )
+        return;
+
+    _isDisabled = disabled;
+    if ( _isDisabled )
+        lcdReadout->display("OFF");
+
+    lcdReadout->setDisabled(disabled);
+    btnZero->setDisabled(disabled);
+    btnSelect->setDisabled(disabled);
 }
 
-bool Axis::getSelected()
+bool Axis::getDisabled()
 {
-    return _isSelected;
+    return _isDisabled;
 }
 
 void Axis::setSelected(bool selected)
@@ -65,8 +85,20 @@ void Axis::setSelected(bool selected)
         lcdReadout->display("SEL");
 }
 
+bool Axis::getSelected()
+{
+    return _isSelected;
+}
+
+/*
+ * Value settings.
+ */
+
 void Axis::setValue(double value, bool isSiUnits)
 {
+    value = value * _direction;
+    value = value * _diaMode;
+
     _absValue = value;
 
     if ( getSelected() )
@@ -108,25 +140,29 @@ double Axis::getAbsValue()
     return _absValue;
 }
 
-void Axis::setDisabled(bool disabled)
+/*
+ * Settings for axis hardware.
+ */
+
+void Axis::setRevDirection(bool revDirection)
 {
-    if ( _isDisabled == disabled )
-        return;
-
-    _isDisabled = disabled;
-    if ( _isDisabled )
-        lcdReadout->display("OFF");
-
-    lcdReadout->setDisabled(disabled);
-    btnZero->setDisabled(disabled);
-    btnSelect->setDisabled(disabled);
+   if ( revDirection )
+       _direction = -1;
+   else
+       _direction = 1;
 }
 
-bool Axis::getDisabled()
+void Axis::setDiameterMode(bool isDiaMode)
 {
-    return _isDisabled;
+    if ( isDiaMode )
+        _diaMode = 2;
+    else
+        _diaMode = 1;
 }
 
+/*
+ * Handlers for events.
+ */
 void Axis::handleAxisZero()
 {
     setZero(_absValue);

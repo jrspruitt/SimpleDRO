@@ -25,6 +25,10 @@ public:
     void                    setAxisEnabled(QString axisName, bool enabled);
     bool                    getAxisEnabled(QString axisName);
     QStringList             axisNames();
+    void                    setAxisRevDirection(QString axisName, bool isRev);
+    bool                    getAxisRevDirection(QString axisName);
+    void                    setAxisDiameterMode(QString axisName, bool isDiaMode);
+    bool                    getAxisDiameterMode(QString axisName);
 };
 
 #endif // SIMPLEDROSETTINGS_H

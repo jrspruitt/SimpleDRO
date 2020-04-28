@@ -8,13 +8,16 @@
 #include <QSpacerItem>
 #include <QLabel>
 #include <QPushButton>
-
+#include <QGroupBox>
+#include <QButtonGroup>
+#include <QDebug>
 HwInfConfig::HwInfConfig(DROSettings *settings, HardwareInf *hwInf, QWidget *parent)
     :QAppWindow(parent, settings)
 {
     this->settings = settings;
     this->hwInf = hwInf;
     this->strError = new QString("");
+
 }
 
 void HwInfConfig::exitWindow() {
@@ -43,22 +46,74 @@ QString HwInfConfig::open(QString *portName, int *baudRate, bool *enableUpdated)
     this->baudRate = baudRate;
     this->enableUpdated = enableUpdated;
     *this->enableUpdated = false;
+    bgrpEnabled = new QButtonGroup();
+    bgrpRevDirection = new QButtonGroup();
+    bgrpDiameterMode = new QButtonGroup();
 
     QHBoxLayout *mainLayout = new QHBoxLayout();
-    QVBoxLayout *enableLayout = new QVBoxLayout();
+    QVBoxLayout *axisSettingsLayout = new QVBoxLayout();
     QLabel *lblEnableSection = new QLabel("Enable Axes");
-    enableLayout->addWidget(lblEnableSection);
+    lblEnableSection->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
+    axisSettingsLayout->addWidget(lblEnableSection);
 
     foreach( const QString axisName, settings->axisNames() ) {
-        QString btnText = settings->getAxisEnabled(axisName) ? "Enabled" : "Disabled";
-        QPushButton *btnAxis = new QPushButton(QString("%1 %2").arg(axisName).arg(btnText));
-        connect(btnAxis, SIGNAL(clicked()), this, SLOT(handleAxisEnabled()));
-        enableLayout->addWidget(btnAxis);
+        int btnNum = settings->axisNames().indexOf(axisName);
+        QVBoxLayout *axisLayout = new QVBoxLayout();
+        axisLayout->setMargin(0);
+
+        QLabel *lblName = new QLabel(QString("%1 Axis").arg(axisName));
+        axisLayout->addWidget(lblName);
+
+        QHBoxLayout *enableLayout = new QHBoxLayout();
+        QLabel *lblEnable = new QLabel("Axis Active: ");
+        enableLayout->addWidget(lblEnable);
+
+        QString strAxisEnable = settings->getAxisEnabled(axisName) ? "Enabled" : "Disabled";
+        QPushButton *btnAxisEnable = new QPushButton(strAxisEnable);
+        bgrpEnabled->addButton(btnAxisEnable, btnNum);
+        btnAxisEnable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        btnAxisEnable->setMaximumWidth(150);
+        enableLayout->addWidget(btnAxisEnable);
+        axisLayout->addItem(enableLayout);
+
+        QHBoxLayout *revLayout = new QHBoxLayout();
+        QLabel *lblRev = new QLabel("Reverse Readout: ");
+        revLayout->addWidget(lblRev);
+
+        QString strAxisRevDir = settings->getAxisRevDirection(axisName) ? "Enabled" : "Disabled";
+        QPushButton *btnAxisRevDir = new QPushButton(strAxisRevDir);
+        bgrpRevDirection->addButton(btnAxisRevDir, btnNum);
+        btnAxisRevDir->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        btnAxisRevDir->setMaximumWidth(150);
+        revLayout->addWidget(btnAxisRevDir);
+        axisLayout->addItem(revLayout);
+
+        QHBoxLayout *diaLayout = new QHBoxLayout();
+        QLabel *lblDia = new QLabel("Diameter Mode: ");
+        diaLayout->addWidget(lblDia);
+
+        QString strAxisDiaMode = settings->getAxisDiameterMode(axisName) ? "Enabled" : "Disabled";
+        QPushButton *btnAxisDiaMode = new QPushButton(strAxisDiaMode);
+        bgrpDiameterMode->addButton(btnAxisDiaMode, btnNum);
+        btnAxisDiaMode->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        btnAxisDiaMode->setMaximumWidth(150);
+        diaLayout->addWidget(btnAxisDiaMode);
+        axisLayout->addItem(diaLayout);
+
+        QGroupBox *gbAxis = new QGroupBox();
+        gbAxis->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+        gbAxis->setLayout(axisLayout);
+        axisSettingsLayout->addWidget(gbAxis);
     }
 
-    mainLayout->addItem(enableLayout);
+    mainLayout->addItem(axisSettingsLayout);
 
-    QSpacerItem *mainLeftSpacer = new QSpacerItem(5, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    connect(bgrpRevDirection, SIGNAL(buttonClicked(int)), this, SLOT(handleAxisRevDirection(int)));
+    connect(bgrpEnabled, SIGNAL(buttonClicked(int)), this, SLOT(handleAxisEnabled(int)));
+    connect(bgrpDiameterMode, SIGNAL(buttonClicked(int)), this, SLOT(handleAxisDiameterMode(int)));
+
+    QSpacerItem *mainLeftSpacer = new QSpacerItem(5, 20, QSizePolicy::Maximum, QSizePolicy::Maximum);
     mainLayout->addItem(mainLeftSpacer);
 
     QVBoxLayout *listsLayout = new QVBoxLayout();
@@ -111,7 +166,7 @@ QString HwInfConfig::open(QString *portName, int *baudRate, bool *enableUpdated)
     listsLayout->addItem(listsBotSpacer);
 
     mainLayout->addItem(listsLayout);
-    QSpacerItem *mainRightSpacer = new QSpacerItem(5, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    QSpacerItem *mainRightSpacer = new QSpacerItem(5, 20, QSizePolicy::Maximum, QSizePolicy::Expanding);
     mainLayout->addItem(mainRightSpacer);
     showWindow(mainLayout, "Hardware Settings");
     exec();
@@ -119,26 +174,46 @@ QString HwInfConfig::open(QString *portName, int *baudRate, bool *enableUpdated)
     return *strError;
 }
 
-void HwInfConfig::handleAxisEnabled()
+void HwInfConfig::handleAxisEnabled(int id)
 {
-    QPushButton *btn = dynamic_cast< QPushButton *>(QObject::sender());
+    QString axisName = settings->axisNames().at(id);
+    QAbstractButton *btn = bgrpEnabled->button(id);
 
-    foreach ( const QString axisName, settings->axisNames() ){
-        QString btnEn = QString("%1 %2").arg(axisName).arg("Enabled");
-        QString btnDis = QString("%1 %2").arg(axisName).arg("Disabled");
+    if ( btn->text().compare("Enabled") == 0 ) {
+        btn->setText("Disabled");
+        settings->setAxisEnabled(axisName, false);
 
-        if ( btn->text().compare(btnEn) == 0 ) {
-            btn->setText(btnDis);
-            settings->setAxisEnabled(axisName, false);
-            *enableUpdated = true;
-            break;
+    } else {
+        btn->setText("Enabled");
+        settings->setAxisEnabled(axisName, true);
+    }
+}
 
-        } else if ( btn->text().compare(btnDis) == 0 ) {
-            btn->setText(btnEn);
-            settings->setAxisEnabled(axisName, true);
-            *enableUpdated = true;
-            break;
-        }
+void HwInfConfig::handleAxisDiameterMode(int id)
+{
+    QString axisName = settings->axisNames().at(id);
+    QAbstractButton *btn = bgrpDiameterMode->button(id);
 
+    if ( btn->text().compare("Enabled") == 0 ) {
+        btn->setText("Disabled");
+        settings->setAxisDiameterMode(axisName, false);
+
+    } else {
+        btn->setText("Enabled");
+        settings->setAxisDiameterMode(axisName, true);
+    }
+}
+void HwInfConfig::handleAxisRevDirection(int id)
+{
+    QString axisName = settings->axisNames().at(id);
+    QAbstractButton *btn = bgrpRevDirection->button(id);
+
+    if ( btn->text().compare("Enabled") == 0 ) {
+        btn->setText("Disabled");
+        settings->setAxisRevDirection(axisName, false);
+
+    } else {
+        btn->setText("Enabled");
+        settings->setAxisRevDirection(axisName, true);
     }
 }

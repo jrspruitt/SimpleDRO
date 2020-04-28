@@ -44,3 +44,23 @@ bool DROSettings::getAxisEnabled(QString axisName)
 {
     return getValue(SIMPLEDRO_CONFIG, QString("%1Enabled").arg(axisName), false).toBool();
 }
+
+void DROSettings::setAxisRevDirection(QString axisName, bool isRev)
+{
+    setKeyValue(SIMPLEDRO_CONFIG, QString("%1RevDirection").arg(axisName), isRev);
+}
+
+bool DROSettings::getAxisRevDirection(QString axisName)
+{
+    return getValue(SIMPLEDRO_CONFIG, QString("%1RevDirection").arg(axisName), false).toBool();
+}
+
+void DROSettings::setAxisDiameterMode(QString axisName, bool isDiaMode)
+{
+    setKeyValue(SIMPLEDRO_CONFIG, QString("%1DiameterMode").arg(axisName), isDiaMode);
+}
+
+bool DROSettings::getAxisDiameterMode(QString axisName)
+{
+    return getValue(SIMPLEDRO_CONFIG, QString("%1DiameterMode").arg(axisName), false).toBool();
+}

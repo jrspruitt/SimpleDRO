@@ -25,6 +25,8 @@ public:
     void            setSelected(bool selected);
     bool            getDisabled();
     void            setDisabled(bool disabled);
+    void            setRevDirection(bool revDirection);
+    void            setDiameterMode(bool isDiaMode);
     void            show();
     void            hide();
 
@@ -40,6 +42,8 @@ private:
     bool            _isSiUnits = true;
     bool            _isSelected = false;
     bool            _isDisabled = true;
+    int             _direction = 1;
+    int             _diaMode = 1;
 
 signals:
 

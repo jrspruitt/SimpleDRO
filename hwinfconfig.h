@@ -6,7 +6,7 @@
 #include "QAppWidgets/qappwindow.h"
 #include "QAppWidgets/qapplist.h"
 #include <QObject>
-#include <QCheckBox>
+#include <QButtonGroup>
 
 #define NOTSET                  "Not Set"
 #define PORTNAME_NOTSET         NOTSET
@@ -33,9 +33,14 @@ private:
     HardwareInf                         *hwInf;
     QAppList                            *listSerialPorts;
     QAppList                            *listBaudRates;
+    QButtonGroup                        *bgrpEnabled;
+    QButtonGroup                        *bgrpRevDirection;
+    QButtonGroup                        *bgrpDiameterMode;
 
 private slots:
-    void                                handleAxisEnabled();
+    void                                handleAxisEnabled(int id);
+    void                                handleAxisRevDirection(int id);
+    void                                handleAxisDiameterMode(int id);
 };
 
 #endif // HWINFSETTINGS_H

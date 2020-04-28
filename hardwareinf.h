@@ -42,9 +42,9 @@ private:
     int                     writeTimeout = 100;
     QMutex                  m_mutex;
     QString                 m_txData = "";
-    QString                 m_respData;
+    QString                 m_respData = "";
     QSerialPortInfo         *portInfo;
-    QString                 _error;
+    QString                 _error = "";
     bool                    _stopHardware = false;
     bool                    _waitToSend = false;
     bool                    _waitForResp = false;

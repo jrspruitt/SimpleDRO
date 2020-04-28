@@ -37,7 +37,7 @@ SimpleDRO::SimpleDRO(QString skinName, QWidget *parent) :
     connect(hwInf, SIGNAL(stateChange(int)), this, SLOT(handleHwInfChange(int)));
 
     if ( hwInf->startHardware() )
-        enableAxes();
+        enableHwInfAxes();
 }
 
 SimpleDRO::~SimpleDRO()
@@ -108,7 +108,7 @@ void SimpleDRO::updateMessage(QString message )
     lblMessage->setText(message);
 }
 
-void SimpleDRO::enableAxes()
+void SimpleDRO::enableHwInfAxes()
 {
     foreach ( const QString axisName, settings->axisNames() ) {
         if ( hwInf->waitToSend(500) ) {
@@ -131,6 +131,15 @@ void SimpleDRO::enableAxes()
             }
         }
     }
+}
+
+void SimpleDRO::configureAxes()
+{
+    foreach ( const QString axisName, settings->axisNames() ) {
+        axisReadouts->value(axisName)->setRevDirection(settings->getAxisRevDirection(axisName));
+        axisReadouts->value(axisName)->setDiameterMode(settings->getAxisDiameterMode(axisName));
+    }
+
 }
 
 void SimpleDRO::handleHwConfig()
@@ -158,7 +167,7 @@ void SimpleDRO::handleHwConfig()
             }
 
             if ( *enableUpdated ) {
-                enableAxes();
+                enableHwInfAxes();
                 msg += "Axes configuration updated.";
             }
 
@@ -201,7 +210,7 @@ void SimpleDRO::handleHwInfChange(int state)
 {
     QString status = "";
     QString msg = "";
-
+    qDebug() << state << endl;
     switch ( state ) {
         case STATE_ERROR:
             foreach ( const QString axisName, settings->axisNames() )
@@ -219,7 +228,7 @@ void SimpleDRO::handleHwInfChange(int state)
             status = "Connected";
             msg = "Hardware is running.";
             while(! hwInf->isRunning() ) continue;
-            enableAxes();
+            enableHwInfAxes();
             break;
 
         case STATE_STOPPED:

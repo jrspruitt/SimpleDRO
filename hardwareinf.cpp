@@ -70,7 +70,7 @@ QStringList HardwareInf::getInterfaces()
 {
     QStringList portNames;
 
-    foreach (const QSerialPortInfo &inf, QSerialPortInfo::availablePorts())
+    foreach ( const QSerialPortInfo &inf, QSerialPortInfo::availablePorts() )
         portNames.append(inf.portName());
 
     return portNames;
@@ -140,14 +140,13 @@ void HardwareInf::run()
     while( !_stopHardware ) {
         switch ( _curState ) {
         case STATE_CONNECTING:
-            if ( serial->open(QIODevice::ReadWrite) )
+            if ( ! serial->open(QIODevice::ReadWrite) )
                 handleStateChange(STATE_RUNNING);
             else
                 _error = serial->errorString();
             break;
 
         case STATE_RUNNING:
-
             if ( m_txData.length() != 0 ) {
                 m_mutex.lock();
                 serial->write(m_txData.toUtf8());

@@ -3,6 +3,7 @@
 #include "hwinfconfig.h"
 #include "axis.h"
 #include "DROWidgets/dronumkeypad.h"
+#include "DROWidgets/drofunctions.h"
 #include "QAppWidgets/qappinfodialog.h"
 
 #include <QHBoxLayout>
@@ -65,6 +66,10 @@ void SimpleDRO::createUi()
 
     QSpacerItem *droSpacer = new QSpacerItem(10, 0, QSizePolicy::Maximum, QSizePolicy::Minimum);
     droLayout->addItem(droSpacer);
+
+    fncKeypad = new DROFunctions(settings, axisReadouts);
+    droLayout->addWidget(fncKeypad);
+    connect(fncKeypad, SIGNAL(message(QString)), this, SLOT(updateMessage(QString)));
 
     DRONumKeypad *keypad = new DRONumKeypad();
     droLayout->addWidget(keypad);
@@ -146,30 +151,24 @@ void SimpleDRO::handleHwConfig()
 {
     QString *portName = new QString("");
     int *baudRate = new int(0);
-    bool *enableUpdated = new bool(false);
-
+    QString *error = new QString("");
     HwInfConfig *hwInfConfig = new HwInfConfig(settings, hwInf);
-    QString error = hwInfConfig->open(portName, baudRate, enableUpdated);
+    hwInfConfig->open(portName, baudRate, error);
 
     QAppInfoDialog *infoDialog = new QAppInfoDialog(settings);
     QString status = "";
     QString msg = "";
 
-    if ( error.isEmpty() ) {
+    if ( error->isEmpty() ) {
         if ( portName->compare(PORTNAME_NOTSET) != 0 && *baudRate != BAUDRATE_NOTSET ) {
             status = "Updated";
-            if ( settings->getHwInfSerialName().compare(*portName) != 0 || settings->getHwInfSerialName().compare(*portName) != 0 ) {
-                hwInf->stopHardware();
-                settings->setHwInfSerialName(*portName);
-                settings->setHwInfSerialBaudRate(*baudRate);
-                hwInf->startHardware();
-                msg = "Hardware configuration set.\n";
-            }
-
-            if ( *enableUpdated ) {
-                enableHwInfAxes();
-                msg += "Axes configuration updated.";
-            }
+            hwInf->stopHardware();
+            settings->setHwInfSerialName(*portName);
+            settings->setHwInfSerialBaudRate(*baudRate);
+            hwInf->startHardware();
+            enableHwInfAxes();
+            configureAxes();
+            msg = "Configuration updated.";
 
         } else {
             status = "Warning";
@@ -178,7 +177,7 @@ void SimpleDRO::handleHwConfig()
 
     } else {
         status = "Error";
-        msg = error;
+        msg = *error;
     }
 
     if ( msg.compare("") != 0 )
@@ -198,10 +197,15 @@ void SimpleDRO::handleSiUnits()
 
 void SimpleDRO::handleKeyPressEnter(QString value)
 {
-    foreach ( const QString name, settings->axisNames() ) {
-        if ( axisReadouts->value(name)->getSelected() ) {
-            axisReadouts->value(name)->setOffset(value.toDouble());
-            axisReadouts->value(name)->setSelected(false);
+    if ( fncKeypad->getSelected() ) {
+        fncKeypad->enterValue(value.toDouble());
+
+    } else {
+        foreach ( const QString name, settings->axisNames() ) {
+            if ( axisReadouts->value(name)->getSelected() ) {
+                axisReadouts->value(name)->setOffset(value.toDouble());
+                axisReadouts->value(name)->setSelected(false);
+            }
         }
     }
 }

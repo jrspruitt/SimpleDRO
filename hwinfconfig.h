@@ -21,16 +21,16 @@ class HwInfConfig : public QAppWindow
 public:
     HwInfConfig(DROSettings *settings, HardwareInf *hwInf, QWidget *parent = nullptr);
     using QAppWindow::open; // Turns off warning about overloading.
-    QString                             open(QString *portName, int *baudRate, bool *enableUpdated);
+    void                                open(QString *portName, int *baudRate, QString *error);
     void                                exitWindow();
-    QString                             *portName;
-    int                                 *baudRate;
-    bool                                *enableUpdated;
     QString                             *strError;
 
 private:
     DROSettings                         *settings;
     HardwareInf                         *hwInf;
+    QString                             *portName;
+    int                                 *baudRate;
+    QString                             *error;
     QAppList                            *listSerialPorts;
     QAppList                            *listBaudRates;
     QButtonGroup                        *bgrpEnabled;

@@ -10,6 +10,7 @@
 #include <QPushButton>
 #include <QGroupBox>
 #include <QButtonGroup>
+#include <QSerialPortInfo>
 #include <QDebug>
 HwInfConfig::HwInfConfig(DROSettings *settings, HardwareInf *hwInf, QWidget *parent)
     :QAppWindow(parent, settings)
@@ -17,7 +18,6 @@ HwInfConfig::HwInfConfig(DROSettings *settings, HardwareInf *hwInf, QWidget *par
     this->settings = settings;
     this->hwInf = hwInf;
     this->strError = new QString("");
-
 }
 
 void HwInfConfig::exitWindow() {
@@ -25,27 +25,27 @@ void HwInfConfig::exitWindow() {
         *portName = listSerialPorts->currentItem()->text();
 
     } else {
-        *portName = PORTNAME_NOTSET;
-        *strError = QString(PORTNAME_NOTSET_MSG);
+        settings->setHwInfSerialName(PORTNAME_NOTSET);
+        *error = QString("%1\n").arg(PORTNAME_NOTSET_MSG);
     }
 
     if ( listBaudRates->currentRow() > 0 ) {
         *baudRate = listBaudRates->currentItem()->text().toInt();
 
     } else {
-        *baudRate = BAUDRATE_NOTSET;
-        *strError += QString(BAUDRATE_NOTSET_MSG);
+        settings->setHwInfSerialBaudRate(BAUDRATE_NOTSET);
+        *error += QString("%1").arg(BAUDRATE_NOTSET_MSG);
     }
 
     hide();
     close();
 }
 
-QString HwInfConfig::open(QString *portName, int *baudRate, bool *enableUpdated) {
+void HwInfConfig::open(QString *portName, int *baudRate, QString *error) {
     this->portName = portName;
     this->baudRate = baudRate;
-    this->enableUpdated = enableUpdated;
-    *this->enableUpdated = false;
+    this->error = error;
+
     bgrpEnabled = new QButtonGroup();
     bgrpRevDirection = new QButtonGroup();
     bgrpDiameterMode = new QButtonGroup();
@@ -151,7 +151,7 @@ QString HwInfConfig::open(QString *portName, int *baudRate, bool *enableUpdated)
     listBaudRates->addItem(NOTSET);
     listBaudRates->setCurrentRow(0);
 
-    QList<int> baudRates = {1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 46800, 500000, 576000, 921600, 1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000};
+    QList<qint32> baudRates = QSerialPortInfo::standardBaudRates();
     for ( int i = 0; i < baudRates.length(); i++ ) {
         listBaudRates->addItem(QString::number(baudRates[i]));
 
@@ -171,7 +171,6 @@ QString HwInfConfig::open(QString *portName, int *baudRate, bool *enableUpdated)
     showWindow(mainLayout, "Hardware Settings");
     exec();
 
-    return *strError;
 }
 
 void HwInfConfig::handleAxisEnabled(int id)

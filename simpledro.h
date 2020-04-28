@@ -4,6 +4,7 @@
 #include "hardwareinf.h"
 #include "axis.h"
 #include "drosettings.h"
+#include "DROWidgets/drofunctions.h"
 #include <QMainWindow>
 #include <QLabel>
 #include <QPushButton>
@@ -21,6 +22,7 @@ public:
 
 private:
     void                                createUi();
+    DROFunctions                        *fncKeypad;
     QHash<QString, Axis *>              *axisReadouts;
     QPushButton                         *btnSiUnits;
     bool                                isSiUnits = true;

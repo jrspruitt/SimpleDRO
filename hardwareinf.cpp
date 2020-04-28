@@ -181,6 +181,7 @@ void HardwareInf::run()
                         handleAxisUpdate(data);
                     }
                 }
+                serial->flush();
 
             } else {
                 switch (serial->error() ) {
@@ -195,7 +196,6 @@ void HardwareInf::run()
                         handleStateChange(STATE_ERROR);
                 }
             }
-            serial->flush();
 
             break;
 

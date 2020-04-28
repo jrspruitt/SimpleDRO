@@ -28,7 +28,7 @@ SOURCES += \
     drosettings.cpp \
     DROWidgets/dronumkeypad.cpp \
     hwinfconfig.cpp \
-    DROWidgets/functionkeypad.cpp
+    DROWidgets/drofunctions.cpp
 
 HEADERS += \
         simpledro.h \
@@ -45,6 +45,6 @@ HEADERS += \
     drosettings.h \
     DROWidgets/dronumkeypad.h \
     hwinfconfig.h \
-    DROWidgets/functionkeypad.h
+    DROWidgets/drofunctions.h
 target.path = /root
 INSTALLS += target

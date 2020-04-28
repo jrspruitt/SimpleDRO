@@ -171,4 +171,5 @@ void Axis::handleAxisZero()
 void Axis::handleAxisSelect()
 {
     setSelected(!_isSelected);
+    emit selectClicked(getName(), getSelected());
 }

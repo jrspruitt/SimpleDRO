@@ -5,17 +5,18 @@
 #include "DROWidgets/dronumkeypad.h"
 #include "QAppWidgets/qappinfodialog.h"
 
-#include <QString>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QSpacerItem>
 #include <QLCDNumber>
+#include <QLoggingCategory>
 #include <QDebug>
 
 SimpleDRO::SimpleDRO(QString skinName, QWidget *parent) :
     QMainWindow(parent)
 {
+    QLoggingCategory::setFilterRules("*.debug=true\nqt.*.debug=false");
     settings = new DROSettings(settingsPathCheck(""));
     settings->setSkin(skinName);
 
@@ -32,7 +33,7 @@ SimpleDRO::SimpleDRO(QString skinName, QWidget *parent) :
     createUi();
 
     hwInf = new HardwareInf(settings);
-    connect(hwInf, SIGNAL(positionUpdate(QString, bool, double, QString)), this, SLOT(updateDro(QString, bool, double, QString)));
+    connect(hwInf, SIGNAL(axisUpdate(QString, bool, double, QString)), this, SLOT(updateDro(QString, bool, double, QString)));
     connect(hwInf, SIGNAL(stateChange(int)), this, SLOT(handleHwInfChange(int)));
 
     if ( hwInf->startHardware() )
@@ -113,11 +114,20 @@ void SimpleDRO::enableAxes()
         if ( hwInf->waitToSend(500) ) {
             if ( settings->getAxisEnabled(axisName) ) {
                 hwInf->sendData(QString("#%1").arg(axisName.toLower()));
-                axisReadouts->value(axisName)->show();
+                hwInf->waitForResp(500);
 
+                if ( hwInf->respData().compare(RESP_SUCCESS) )
+                    axisReadouts->value(axisName)->show();
+                else
+                    qDebug() << "Failed response enabling." << axisName << endl;
             } else {
                 hwInf->sendData(QString("#%1").arg(axisName.toUpper()));
-                axisReadouts->value(axisName)->hide();
+                hwInf->waitForResp(500);
+
+                if ( hwInf->respData().compare(RESP_SUCCESS) )
+                    axisReadouts->value(axisName)->hide();
+                else
+                    qDebug() << "Failed Response disabling" << axisName << endl;
             }
         }
     }
@@ -189,7 +199,6 @@ void SimpleDRO::handleKeyPressEnter(QString value)
 
 void SimpleDRO::handleHwInfChange(int state)
 {
-    qDebug() << "State" << state << endl;
     QString status = "";
     QString msg = "";
 

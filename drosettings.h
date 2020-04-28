@@ -24,10 +24,7 @@ public:
     void                    setHwInfSerialBaudRate(int baudRate);
     void                    setAxisEnabled(QString axisName, bool enabled);
     bool                    getAxisEnabled(QString axisName);
-    QString                 activeIconPath;
-    QString                 inactiveIconPath;
     QStringList             axisNames();
-    QStringList             axisAllNames();
 };
 
 #endif // SIMPLEDROSETTINGS_H

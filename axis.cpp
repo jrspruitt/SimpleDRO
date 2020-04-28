@@ -4,7 +4,6 @@
 
 #include <QHBoxLayout>
 #include <QPushButton>
-#include <QDebug>
 
 Axis::Axis(QString axisName, QObject *parent) : QObject(parent)
 {

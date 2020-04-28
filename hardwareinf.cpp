@@ -4,8 +4,6 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QMutexLocker>
-#include <QTimer>
-#include <QDebug>
 
 HardwareInf::HardwareInf(DROSettings *settings, QObject *parent)
 {
@@ -112,7 +110,107 @@ bool HardwareInf::waitToSend(int ms)
     return false;
 }
 
-void HardwareInf::processUpdate(QString data)
+bool HardwareInf::waitForResp(int ms)
+{
+    if ( !_waitForResp )
+        return true;
+
+    struct timespec ts = {ms / 1000, (ms % 1000) * 1000 * 1000};
+    nanosleep(&ts, nullptr);
+
+    if ( !_waitForResp )
+        return true;
+
+    return false;
+}
+
+QString HardwareInf::respData()
+{
+    m_mutex.lock();
+    QString resp = m_respData;
+    m_mutex.unlock();
+    _waitForResp = false;
+    return resp;
+}
+
+void HardwareInf::run()
+{
+    QString rawData = "";
+
+    while( !_stopHardware ) {
+        switch ( _curState ) {
+        case STATE_CONNECTING:
+            if ( serial->open(QIODevice::ReadWrite) )
+                handleStateChange(STATE_RUNNING);
+            else
+                _error = serial->errorString();
+            break;
+
+        case STATE_RUNNING:
+
+            if ( m_txData.length() != 0 ) {
+                m_mutex.lock();
+                serial->write(m_txData.toUtf8());
+                serial->waitForBytesWritten(writeTimeout);
+                m_txData = "";
+                _waitToSend = false;
+                _waitForResp = true;
+                m_mutex.unlock();
+            }
+
+            if ( serial->waitForReadyRead(readTimeout) ) {
+                rawData = serial->readAll();
+                QStringList axisData(rawData.split("|"));
+
+                foreach ( const QString data, axisData ) {
+                    if ( data.trimmed().isEmpty() ) {
+                            continue;
+
+                    } else if ( data.compare(RESP_FAIL) == 0 ) {
+                        m_mutex.lock();
+                        m_respData = false;
+                        _waitForResp = false;
+                        m_mutex.unlock();
+
+                    } else if ( data.compare(RESP_SUCCESS) == 0 ) {
+                        m_mutex.lock();
+                        m_respData = true;
+                        _waitForResp = false;
+                        m_mutex.unlock();
+
+                    } else {
+                        handleAxisUpdate(data);
+                    }
+                }
+
+            } else {
+                switch (serial->error() ) {
+                    case QSerialPort::TimeoutError:
+                        break;
+                    case QSerialPort::ReadError:
+                        _error = "Hardware not available.\n Please plug in device.";
+                        serial->close();
+                        handleStateChange(STATE_WAITING);
+                        break;
+                    default:
+                        handleStateChange(STATE_ERROR);
+                }
+            }
+            serial->flush();
+
+            break;
+
+        case STATE_WAITING:
+            if ( isInfAvailable(settings->getHwInfSerialName()))
+                startHardware();
+
+        }// switch
+    }// while
+    handleStateChange(STATE_STOPPED);
+
+}
+
+void HardwareInf::handleAxisUpdate(QString data)
 {
     bool nameOk = false;
     QString name = "";
@@ -151,68 +249,7 @@ void HardwareInf::processUpdate(QString data)
     else
         return;
 
-    emit positionUpdate(name, on, value, units);
-}
-
-void HardwareInf::run()
-{
-    QString rawData = "";
-    while( !_stopHardware ) {
-        switch ( _curState ) {
-        case STATE_CONNECTING:
-            if ( serial->open(QIODevice::ReadWrite) )
-                handleStateChange(STATE_RUNNING);
-            else
-                _error = serial->errorString();
-            break;
-
-        case STATE_RUNNING:
-
-            if ( m_txData.length() != 0 ) {
-                m_mutex.lock();
-                serial->write(m_txData.toUtf8());
-                serial->waitForBytesWritten(100);
-                m_txData = "";
-                _waitToSend = false;
-                m_mutex.unlock();
-            }
-
-            if ( serial->waitForReadyRead(readTimeout) ) {
-                rawData = serial->readAll();
-                QStringList axisData(rawData.split("|"));
-
-                foreach ( const QString data, axisData ) {
-                    if ( data.trimmed().isEmpty() )
-                            continue;
-
-                    if ( data.compare("NO") != 0 && data.compare("OK") != 0)
-                        processUpdate(data);
-                }
-            } else {
-                switch (serial->error() ) {
-                    case QSerialPort::TimeoutError:
-                        break;
-                    case QSerialPort::ReadError:
-                        _error = "Hardware not available.\n Please plug in device.";
-                        serial->close();
-                        handleStateChange(STATE_WAITING);
-                        break;
-                    default:
-                        handleStateChange(STATE_ERROR);
-                }
-            }
-            serial->flush();
-
-            break;
-
-        case STATE_WAITING:
-            if ( isInfAvailable(settings->getHwInfSerialName()))
-                startHardware();
-
-        }// switch
-    }// while
-    handleStateChange(STATE_STOPPED);
-
+    emit axisUpdate(name, on, value, units);
 }
 
 void HardwareInf::handleStateChange(int state)

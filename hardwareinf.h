@@ -14,6 +14,9 @@
 #define STATE_ERROR             3
 #define STATE_WAITING           4
 
+#define RESP_SUCCESS            "OK"
+#define RESP_FAIL               "NO"
+
 class HardwareInf : public QThread
 {
     Q_OBJECT
@@ -23,9 +26,11 @@ public:
     bool                    startHardware();  // Start thread using given serial port name.
     void                    stopHardware();                     // Stop thread from running.
     QStringList             getInterfaces();
-    void                    sendData(QString data);
-    bool                    waitToSend(int ms);
     bool                    isInfAvailable(QString portName);
+    void                    sendData(QString data);
+    QString                 respData();
+    bool                    waitToSend(int ms);
+    bool                    waitForResp(int ms);
     QString                 getError();
     int                     getState();
 
@@ -34,19 +39,21 @@ private:
     DROSettings             *settings;
     QSerialPort             *serial;
     int                     readTimeout = 50; //msec
-    bool                    _stopHardware = false;
+    int                     writeTimeout = 100;
     QMutex                  m_mutex;
     QString                 m_txData = "";
-    void                    processUpdate(QString data);
+    QString                 m_respData;
     QSerialPortInfo         *portInfo;
     QString                 _error;
+    bool                    _stopHardware = false;
     bool                    _waitToSend = false;
-    bool                    _first = true;
+    bool                    _waitForResp = false;
     int                     _curState = 0;
     void                    handleStateChange(int state);
+    void                    handleAxisUpdate(QString data);
 
 signals:
-    void                    positionUpdate(QString name, bool on, double value, QString units); // Connect main app to this signal to get position data updates.
+    void                    axisUpdate(QString name, bool on, double value, QString units); // Connect main app to this signal to get position data updates.
     void                    stateChange(int state);
 
 };

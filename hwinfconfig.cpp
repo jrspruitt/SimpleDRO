@@ -2,13 +2,12 @@
 #include "drosettings.h"
 #include "hardwareinf.h"
 #include "QAppWidgets/qapplist.h"
+
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QSpacerItem>
 #include <QLabel>
-#include <QCheckBox>
 #include <QPushButton>
-#include <QDebug>
 
 HwInfConfig::HwInfConfig(DROSettings *settings, HardwareInf *hwInf, QWidget *parent)
     :QAppWindow(parent, settings)
@@ -50,7 +49,7 @@ QString HwInfConfig::open(QString *portName, int *baudRate, bool *enableUpdated)
     QLabel *lblEnableSection = new QLabel("Enable Axes");
     enableLayout->addWidget(lblEnableSection);
 
-    foreach( const QString axisName, settings->axisAllNames() ) {
+    foreach( const QString axisName, settings->axisNames() ) {
         QString btnText = settings->getAxisEnabled(axisName) ? "Enabled" : "Disabled";
         QPushButton *btnAxis = new QPushButton(QString("%1 %2").arg(axisName).arg(btnText));
         connect(btnAxis, SIGNAL(clicked()), this, SLOT(handleAxisEnabled()));
@@ -124,7 +123,7 @@ void HwInfConfig::handleAxisEnabled()
 {
     QPushButton *btn = dynamic_cast< QPushButton *>(QObject::sender());
 
-    foreach ( const QString axisName, settings->axisAllNames() ){
+    foreach ( const QString axisName, settings->axisNames() ){
         QString btnEn = QString("%1 %2").arg(axisName).arg("Enabled");
         QString btnDis = QString("%1 %2").arg(axisName).arg("Disabled");
 

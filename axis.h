@@ -46,7 +46,7 @@ private:
     int             _diaMode = 1;
 
 signals:
-    void            selectClicked(QString axisName, bool selected);
+    void            selectClicked(QString axisName);
 
 private slots:
     void            handleAxisZero();

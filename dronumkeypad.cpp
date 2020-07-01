@@ -75,11 +75,11 @@ void DRONumKeypad::handleKeyPress()
         keypadValue = keypadValue.left(keypadValue.length()-1);
 
     } else if ( btn->text().compare(KEY_CLR) == 0) {
-        keypadValue = "";
+        keypadValue = "0";
 
     } else if ( btn->text().compare(KEY_ENT) == 0) {
         emit keyPressEnter(keypadValue);
-        keypadValue = "";
+        keypadValue = "0";
 
     } else if ( btn->text().compare(KEY_DEC) == 0) {
         if ( !keypadValue.contains('.') )

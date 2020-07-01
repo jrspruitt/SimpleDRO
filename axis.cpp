@@ -4,7 +4,7 @@
 
 #include <QHBoxLayout>
 #include <QPushButton>
-
+#include <QDebug>
 Axis::Axis(QString axisName, QObject *parent) : QObject(parent)
 {
     this->_axisName = axisName;
@@ -96,15 +96,15 @@ bool Axis::getSelected()
 
 void Axis::setValue(double value, bool isSiUnits)
 {
-    value = value * _direction;
-    value = value * _diaMode;
-
     _absValue = value;
-
+    qDebug() << value << endl;
     if ( getSelected() )
         return;
     else if ( getDisabled() )
         return;
+
+    value *= _direction;
+    value *= _diaMode;
 
     _value = value - _zero;
     _isSiUnits = isSiUnits;
@@ -122,7 +122,7 @@ double Axis::getValue()
 
 void Axis::setZero(double value)
 {
-    _zero = value;
+    _zero = value * _diaMode * _direction;
 }
 
 double Axis::getZero()
@@ -171,5 +171,5 @@ void Axis::handleAxisZero()
 void Axis::handleAxisSelect()
 {
     setSelected(!_isSelected);
-    emit selectClicked(getName(), getSelected());
+    emit selectClicked(getName());
 }

@@ -2,8 +2,8 @@
 #include "drosettings.h"
 #include "hwinfconfig.h"
 #include "axis.h"
-#include "DROWidgets/dronumkeypad.h"
-#include "DROWidgets/drofunctions.h"
+#include "dronumkeypad.h"
+#include "drofunctions.h"
 #include "QAppWidgets/qappinfodialog.h"
 
 #include <QHBoxLayout>
@@ -57,8 +57,10 @@ void SimpleDRO::createUi()
 
     QVBoxLayout *readoutLayout = new QVBoxLayout();
 
-    foreach ( const QString axisName, settings->axisNames() )
+    foreach ( const QString axisName, settings->axisNames() ) {
         readoutLayout->addWidget(axisReadouts->value(axisName)->axisReadout());
+        connect(axisReadouts->value(axisName), SIGNAL(selectClicked(QString)), this, SLOT(handleAxisSelect(QString)));
+    }
 
     QSpacerItem *readoutSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     readoutLayout->addItem(readoutSpacer);
@@ -67,9 +69,9 @@ void SimpleDRO::createUi()
     QSpacerItem *droSpacer = new QSpacerItem(10, 0, QSizePolicy::Maximum, QSizePolicy::Minimum);
     droLayout->addItem(droSpacer);
 
-    fncKeypad = new DROFunctions(settings, axisReadouts);
-    droLayout->addWidget(fncKeypad);
-    connect(fncKeypad, SIGNAL(message(QString)), this, SLOT(updateMessage(QString)));
+    funcKeypad = new DROFunctions(settings, axisReadouts);
+    droLayout->addWidget(funcKeypad);
+    connect(funcKeypad, SIGNAL(message(QString)), this, SLOT(updateMessage(QString)));
 
     DRONumKeypad *keypad = new DRONumKeypad();
     droLayout->addWidget(keypad);
@@ -110,6 +112,9 @@ void SimpleDRO::updateDro(QString name, bool on, double value, QString units)
 
 void SimpleDRO::updateMessage(QString message )
 {
+    if ( message.isEmpty() )
+        message = "Welcome to SimpleDRO.";
+
     lblMessage->setText(message);
 }
 
@@ -195,10 +200,16 @@ void SimpleDRO::handleSiUnits()
         btnSiUnits->setText("Imp Units");
 }
 
+void SimpleDRO::handleAxisSelect(QString axisName)
+{
+    if ( funcKeypad->getSelected() )
+        funcKeypad->enterValue(axisReadouts->value(axisName)->getValue());
+}
+
 void SimpleDRO::handleKeyPressEnter(QString value)
 {
-    if ( fncKeypad->getSelected() ) {
-        fncKeypad->enterValue(value.toDouble());
+    if ( funcKeypad->getSelected() ) {
+        funcKeypad->enterValue(value.toDouble());
 
     } else {
         foreach ( const QString name, settings->axisNames() ) {

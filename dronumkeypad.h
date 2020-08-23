@@ -40,6 +40,7 @@ private:
     QLCDNumber          *lcdKeypad;
 
 signals:
+    void                keyPressEnter();
     void                keyPressEnter(QString keypadValue);
 
 public slots:

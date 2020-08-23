@@ -2,7 +2,6 @@
 #include "drosettings.h"
 #include "hwinfconfig.h"
 #include "axis.h"
-#include "dronumkeypad.h"
 #include "drofunctions.h"
 #include "QAppWidgets/qappinfodialog.h"
 
@@ -59,7 +58,7 @@ void SimpleDRO::createUi()
 
     foreach ( const QString axisName, settings->axisNames() ) {
         readoutLayout->addWidget(axisReadouts->value(axisName)->axisReadout());
-        connect(axisReadouts->value(axisName), SIGNAL(selectClicked(QString)), this, SLOT(handleAxisSelect(QString)));
+        //connect(axisReadouts->value(axisName), SIGNAL(selectClicked(QString)), this, SLOT(handleAxisSelect(QString)));
     }
 
     QSpacerItem *readoutSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -69,13 +68,9 @@ void SimpleDRO::createUi()
     QSpacerItem *droSpacer = new QSpacerItem(10, 0, QSizePolicy::Maximum, QSizePolicy::Minimum);
     droLayout->addItem(droSpacer);
 
-    funcKeypad = new DROFunctions(settings, axisReadouts);
-    droLayout->addWidget(funcKeypad);
-    connect(funcKeypad, SIGNAL(message(QString)), this, SLOT(updateMessage(QString)));
-
-    DRONumKeypad *keypad = new DRONumKeypad();
-    droLayout->addWidget(keypad);
-    connect(keypad, SIGNAL(keyPressEnter(QString)), this, SLOT(handleKeyPressEnter(QString)));
+    droFunctions = new DROFunctions(settings, axisReadouts);
+    droLayout->addWidget(droFunctions);
+    connect(droFunctions, SIGNAL(message(QString)), this, SLOT(updateMessage(QString)));
 
     mainLayout->addItem(droLayout);
     QHBoxLayout *menuLayout = new QHBoxLayout();
@@ -200,32 +195,13 @@ void SimpleDRO::handleSiUnits()
         btnSiUnits->setText("Imp Units");
 }
 
-void SimpleDRO::handleAxisSelect(QString axisName)
-{
-    if ( funcKeypad->getSelected() )
-        funcKeypad->enterValue(axisReadouts->value(axisName)->getValue());
-}
 
-void SimpleDRO::handleKeyPressEnter(QString value)
-{
-    if ( funcKeypad->getSelected() ) {
-        funcKeypad->enterValue(value.toDouble());
-
-    } else {
-        foreach ( const QString name, settings->axisNames() ) {
-            if ( axisReadouts->value(name)->getSelected() ) {
-                axisReadouts->value(name)->setOffset(value.toDouble());
-                axisReadouts->value(name)->setSelected(false);
-            }
-        }
-    }
-}
 
 void SimpleDRO::handleHwInfChange(int state)
 {
     QString status = "";
     QString msg = "";
-    qDebug() << state << endl;
+
     switch ( state ) {
         case STATE_ERROR:
             foreach ( const QString axisName, settings->axisNames() )

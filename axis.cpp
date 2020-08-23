@@ -97,7 +97,7 @@ bool Axis::getSelected()
 void Axis::setValue(double value, bool isSiUnits)
 {
     _absValue = value;
-    qDebug() << value << endl;
+
     if ( getSelected() )
         return;
     else if ( getDisabled() )

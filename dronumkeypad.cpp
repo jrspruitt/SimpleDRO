@@ -78,6 +78,7 @@ void DRONumKeypad::handleKeyPress()
         keypadValue = "0";
 
     } else if ( btn->text().compare(KEY_ENT) == 0) {
+        emit keyPressEnter();
         emit keyPressEnter(keypadValue);
         keypadValue = "0";
 

@@ -22,7 +22,7 @@ public:
 
 private:
     void                                createUi();
-    DROFunctions                        *funcKeypad;
+    DROFunctions                        *droFunctions;
     QHash<QString, Axis *>              *axisReadouts;
     QPushButton                         *btnSiUnits;
     bool                                isSiUnits = true;
@@ -37,8 +37,6 @@ private slots:
     void                                handleHwConfig();
     void                                handleHwInfChange(int state);
     void                                handleSiUnits();
-    void                                handleKeyPressEnter(QString value);
-    void                                handleAxisSelect(QString axisName);
     void                                handleExit();
 };
 

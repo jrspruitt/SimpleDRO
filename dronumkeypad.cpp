@@ -20,6 +20,12 @@ QString DRONumKeypad::getKeypadValue()
     return keypadValue;
 }
 
+void DRONumKeypad::setKeypadValue(QString value)
+{
+    keypadValue = value;
+    lcdKeypad->display(keypadValue);
+}
+
 void DRONumKeypad::createUi()
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
@@ -30,6 +36,7 @@ void DRONumKeypad::createUi()
     lcdKeypad->setSegmentStyle(QLCDNumber::Flat);
     lcdKeypad->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
     lcdKeypad->setMinimumHeight(40);
+    lcdKeypad->display("");
     mainLayout->addWidget(lcdKeypad);
 
     //QVBoxLayout *keypadLayout = new QVBoxLayout();
@@ -75,12 +82,13 @@ void DRONumKeypad::handleKeyPress()
         keypadValue = keypadValue.left(keypadValue.length()-1);
 
     } else if ( btn->text().compare(KEY_CLR) == 0) {
-        keypadValue = "0";
+        emit keyPressClear();
+        keypadValue = "";
 
     } else if ( btn->text().compare(KEY_ENT) == 0) {
         emit keyPressEnter();
         emit keyPressEnter(keypadValue);
-        keypadValue = "0";
+        keypadValue = "";
 
     } else if ( btn->text().compare(KEY_DEC) == 0) {
         if ( !keypadValue.contains('.') )
@@ -99,5 +107,5 @@ void DRONumKeypad::handleKeyPress()
         decOffset = 0;
 
     keypadValue = keypadValue.right(MAX_DIGITS - decOffset);
-    lcdKeypad->display(keypadValue);
+    setKeypadValue(keypadValue);
 }

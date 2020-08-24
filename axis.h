@@ -15,7 +15,7 @@ public:
     explicit Axis(QString axisName, QObject *parent = nullptr);
     QWidget*        axisReadout();
     QString         getName();
-    void            setValue(double value, bool isSiUnits);
+    void            setValue(double value);
     double          getValue();
     double          getAbsValue();
     void            setZero(double value);
@@ -27,6 +27,8 @@ public:
     void            setDisabled(bool disabled);
     void            setRevDirection(bool revDirection);
     void            setDiameterMode(bool isDiaMode);
+    void            setSiUnits(bool isSiUnits);
+    bool            getSiUnits();
     void            show();
     void            hide();
 
@@ -39,6 +41,7 @@ private:
     double          _value = 0;
     double          _absValue = 0;
     double          _zero = 0;
+    double          _offset = 0;
     bool            _isSiUnits = true;
     bool            _isSelected = false;
     bool            _isDisabled = true;

@@ -64,3 +64,13 @@ bool DROSettings::getAxisDiameterMode(QString axisName)
 {
     return getValue(SIMPLEDRO_CONFIG, QString("%1DiameterMode").arg(axisName), false).toBool();
 }
+
+void DROSettings::setAxisOffset(QString axisName, int offsetNum, double offset)
+{
+    setKeyValue(DROFUNC_OFFSETS, QString("%1%2").arg(axisName, QString::number(offsetNum)), offset);
+}
+
+double DROSettings::getAxisOffset(QString axisName, int offsetNum)
+{
+    return getValue(DROFUNC_OFFSETS, QString("%1%2").arg(axisName, QString::number(offsetNum)), 123456789.10).toDouble();
+}

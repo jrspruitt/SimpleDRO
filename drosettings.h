@@ -7,6 +7,7 @@
 #define UNITS_IMP               "in"
 #define UNITS_SI                "mm"
 
+#define DROFUNC_OFFSETS         "DROFunc_Offsets"
 #define SIMPLEDRO_CONFIG        "SimpleDRO"
 #define XAXIS_NAME              "X"
 #define YAXIS_NAME              "Y"
@@ -29,6 +30,9 @@ public:
     bool                    getAxisRevDirection(QString axisName);
     void                    setAxisDiameterMode(QString axisName, bool isDiaMode);
     bool                    getAxisDiameterMode(QString axisName);
+    void                    setAxisOffset(QString axisName, int offsetNum, double offset);
+    double                  getAxisOffset(QString axisName, int offsetNum);
 };
 
 #endif // SIMPLEDROSETTINGS_H
+

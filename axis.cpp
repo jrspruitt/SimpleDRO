@@ -8,8 +8,6 @@
 Axis::Axis(QString axisName, QObject *parent) : QObject(parent)
 {
     this->_axisName = axisName;
-    setZero(0);
-    setOffset(0);
 }
 
 QString Axis::getName()
@@ -78,6 +76,16 @@ bool Axis::getDisabled()
     return _isDisabled;
 }
 
+void Axis::setSiUnits(bool isSiUnits)
+{
+    _isSiUnits = isSiUnits;
+}
+
+bool Axis::getSiUnits()
+{
+    return _isSiUnits;
+}
+
 void Axis::setSelected(bool selected)
 {
     _isSelected = selected;
@@ -94,7 +102,7 @@ bool Axis::getSelected()
  * Value settings.
  */
 
-void Axis::setValue(double value, bool isSiUnits)
+void Axis::setValue(double value)
 {
     _absValue = value;
 
@@ -106,10 +114,9 @@ void Axis::setValue(double value, bool isSiUnits)
     value *= _direction;
     value *= _diaMode;
 
-    _value = value - _zero;
-    _isSiUnits = isSiUnits;
+    _value = value - _zero + _offset;
 
-    if ( _isSiUnits )
+    if ( getSiUnits() )
         lcdReadout->display(QString::number(_value, 'f', 2));
     else
         lcdReadout->display(QString::number(_value, 'f', 4));
@@ -122,7 +129,7 @@ double Axis::getValue()
 
 void Axis::setZero(double value)
 {
-    _zero = value * _diaMode * _direction;
+    _zero = getAbsValue() - (value * _diaMode * _direction);
 }
 
 double Axis::getZero()
@@ -132,7 +139,7 @@ double Axis::getZero()
 
 void Axis::setOffset(double value)
 {
-    setZero(getAbsValue() - value);
+    _offset = value * _diaMode * _direction;
 }
 
 double Axis::getAbsValue()
@@ -165,7 +172,8 @@ void Axis::setDiameterMode(bool isDiaMode)
  */
 void Axis::handleAxisZero()
 {
-    setZero(_absValue);
+    setOffset(0);
+    setZero(0);
 }
 
 void Axis::handleAxisSelect()

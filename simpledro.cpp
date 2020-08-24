@@ -102,7 +102,8 @@ void SimpleDRO::updateDro(QString name, bool on, double value, QString units)
     else if ( units.compare(UNITS_IMP) == 0 && isSiUnits )
         value = 25.4 * value;
 
-    axisReadouts->value(name)->setValue(value, isSiUnits);
+    axisReadouts->value(name)->setSiUnits(isSiUnits);
+    axisReadouts->value(name)->setValue(value);
 }
 
 void SimpleDRO::updateMessage(QString message )

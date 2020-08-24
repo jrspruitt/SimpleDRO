@@ -33,6 +33,7 @@ public:
     QStringList         keyValues;
     QString             keypadValue;
     QString             getKeypadValue();
+    void                setKeypadValue(QString value);
 
 private:
     void                createUi();
@@ -42,9 +43,11 @@ private:
 signals:
     void                keyPressEnter();
     void                keyPressEnter(QString keypadValue);
+    void                keyPressClear();
 
 public slots:
     void                handleKeyPress();
+
 };
 
 #endif // DROKEYPAD_H

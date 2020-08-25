@@ -20,8 +20,11 @@ void DROFunctions::createUi()
 {
     QHBoxLayout *mainLayout = new QHBoxLayout();
     QVBoxLayout *funcLayout = new QVBoxLayout();
+
     foreach ( const QString funcName, funcNames ) {
         QPushButton *btn = new QPushButton(funcName);
+        btn->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        btn->setFocusPolicy(Qt::NoFocus);
         bgrpFunctions->addButton(btn, funcNames.indexOf(funcName));
         funcLayout->addWidget(btn);
     }
@@ -30,9 +33,10 @@ void DROFunctions::createUi()
     mainLayout->addItem(funcLayout);
 
     keypad = new DRONumKeypad();
-    mainLayout->addWidget(keypad);
+    keypad->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
     connect(keypad, SIGNAL(keyPressEnter()), this, SLOT(handleConfigFunc()));
     connect(keypad, SIGNAL(keyPressClear()), this, SLOT(handleStopFunc()));
+    mainLayout->addWidget(keypad);
 
     setLayout(mainLayout);
     show();
@@ -110,6 +114,8 @@ void DROFunctions::handleFuncDefault()
  */
 void DROFunctions::handleFuncHalf()
 {
+    QHash<QString, double> tmpVal;
+
     switch (_curIndex ) {
     case 0:
         emit message("Go to first location, select axis then enter.");
@@ -119,13 +125,12 @@ void DROFunctions::handleFuncHalf()
     case 1:
         foreach ( const QString axisName, settings->axisNames() ) {
             if ( axisReadouts->value(axisName)->getSelected() ) {
-                QHash<QString, double> tmpVal;
                 tmpVal.insert(axisName, axisReadouts->value(axisName)->getAbsValue());
-                _funcTempValues->insert(0, tmpVal);
                 axisReadouts->value(axisName)->setSelected(false);
             }
         }
 
+        _funcTempValues->insert(0, tmpVal);
         emit message("Go to second location, select axis then enter.");
         _curIndex++;
         break;

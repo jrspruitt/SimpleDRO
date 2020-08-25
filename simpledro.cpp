@@ -36,8 +36,7 @@ SimpleDRO::SimpleDRO(QString skinName, QWidget *parent) :
     connect(hwInf, SIGNAL(axisUpdate(QString, bool, double, QString)), this, SLOT(updateDro(QString, bool, double, QString)));
     connect(hwInf, SIGNAL(stateChange(int)), this, SLOT(handleHwInfChange(int)));
 
-    if ( hwInf->startHardware() )
-        enableHwInfAxes();
+    hwInf->startHardware();
 }
 
 SimpleDRO::~SimpleDRO()
@@ -58,7 +57,10 @@ void SimpleDRO::createUi()
 
     foreach ( const QString axisName, settings->axisNames() ) {
         readoutLayout->addWidget(axisReadouts->value(axisName)->axisReadout());
-        //connect(axisReadouts->value(axisName), SIGNAL(selectClicked(QString)), this, SLOT(handleAxisSelect(QString)));
+        if ( settings->getAxisEnabled(axisName) )
+            axisReadouts->value(axisName)->show();
+        else
+            axisReadouts->value(axisName)->hide();
     }
 
     QSpacerItem *readoutSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -69,23 +71,30 @@ void SimpleDRO::createUi()
     droLayout->addItem(droSpacer);
 
     droFunctions = new DROFunctions(settings, axisReadouts);
+    droFunctions->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     droLayout->addWidget(droFunctions);
     connect(droFunctions, SIGNAL(message(QString)), this, SLOT(updateMessage(QString)));
-
     mainLayout->addItem(droLayout);
+
     QHBoxLayout *menuLayout = new QHBoxLayout();
 
+    QPushButton *btnClose = new QPushButton("Exit");
+    btnClose->setFocusPolicy(Qt::NoFocus);
+    btnClose->setProperty("class", "MenuButton");
+    connect(btnClose, SIGNAL(clicked()), this, SLOT(handleExit()));
+    menuLayout->addWidget(btnClose);
+
     btnSiUnits = new QPushButton("Si Units");
+    btnSiUnits->setFocusPolicy(Qt::NoFocus);
+    btnSiUnits->setProperty("class", "MenuButton");
     connect(btnSiUnits, SIGNAL(clicked()), this, SLOT(handleSiUnits()));
     menuLayout->addWidget(btnSiUnits);
 
     QPushButton *btnHwSettings = new QPushButton("Hardware Settings");
+    btnHwSettings->setFocusPolicy(Qt::NoFocus);
+    btnHwSettings->setProperty("class", "MenuButton");
     connect(btnHwSettings, SIGNAL(clicked()), this, SLOT(handleHwConfig()));
     menuLayout->addWidget(btnHwSettings);
-
-    QPushButton *btnClose = new QPushButton("Exit");
-    connect(btnClose, SIGNAL(clicked()), this, SLOT(handleExit()));
-    menuLayout->addWidget(btnClose);
 
     mainLayout->addItem(menuLayout);
 
@@ -109,7 +118,7 @@ void SimpleDRO::updateDro(QString name, bool on, double value, QString units)
 void SimpleDRO::updateMessage(QString message )
 {
     if ( message.isEmpty() )
-        message = "Welcome to SimpleDRO.";
+        message = "SimpleDRO.";
 
     lblMessage->setText(message);
 }
@@ -120,7 +129,7 @@ void SimpleDRO::enableHwInfAxes()
         if ( hwInf->waitToSend(500) ) {
             if ( settings->getAxisEnabled(axisName) ) {
                 hwInf->sendData(QString("#%1").arg(axisName.toLower()));
-                hwInf->waitForResp(500);
+                hwInf->waitForResp(1000);
 
                 if ( hwInf->respData().compare(RESP_SUCCESS) )
                     axisReadouts->value(axisName)->show();
@@ -128,7 +137,7 @@ void SimpleDRO::enableHwInfAxes()
                     qDebug() << "Failed response enabling." << axisName << endl;
             } else {
                 hwInf->sendData(QString("#%1").arg(axisName.toUpper()));
-                hwInf->waitForResp(500);
+                hwInf->waitForResp(1000);
 
                 if ( hwInf->respData().compare(RESP_SUCCESS) )
                     axisReadouts->value(axisName)->hide();
@@ -195,8 +204,6 @@ void SimpleDRO::handleSiUnits()
     else
         btnSiUnits->setText("Imp Units");
 }
-
-
 
 void SimpleDRO::handleHwInfChange(int state)
 {

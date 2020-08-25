@@ -22,6 +22,8 @@ QWidget * Axis::axisReadout()
     mainWidget = new QWidget();
     QHBoxLayout *mainLayout = new QHBoxLayout();
     lcdReadout = new QLCDNumber(mainWidget);
+    lcdReadout->setMinimumWidth(200);
+    lcdReadout->setMinimumHeight(75);
     lcdReadout->setDigitCount(7);
     lcdReadout->setSegmentStyle(QLCDNumber::Flat);
     lcdReadout->display("OFF");

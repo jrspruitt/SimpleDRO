@@ -54,6 +54,7 @@ void DRONumKeypad::createUi()
 
         for ( int j = 0; j < rowLength; j++ ){
             QPushButton *btn = new QPushButton(keyValues.at(i+j));
+            btn->setFocusPolicy(Qt::NoFocus);
             btn->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
             connect(btn, SIGNAL(clicked()), this, SLOT(handleKeyPress()));
             row->addWidget(btn);
@@ -61,13 +62,6 @@ void DRONumKeypad::createUi()
 
         mainLayout->addItem(row);
     }
-    //gbKeypad = new QGroupBox();
-    //gbKeypad->setLayout(keypadLayout);
-    //gbKeypad->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-    //mainLayout->addWidget(gbKeypad);
-
-    //shSpacer = new QSpacerItem(5, 5, QSizePolicy::Maximum, QSizePolicy::Maximum);
-    //mainLayout->addItem(shSpacer);
 
     setLayout(mainLayout);
     show();

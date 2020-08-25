@@ -4,6 +4,7 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QMutexLocker>
+#include <QDebug>
 
 HardwareInf::HardwareInf(DROSettings *settings, QObject *parent)
 {

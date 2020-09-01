@@ -113,10 +113,10 @@ void Axis::setValue(double value)
     else if ( getDisabled() )
         return;
 
-    value *= _direction;
-    value *= _diaMode;
-
     _value = value - _zero + _offset;
+
+    _value *= _diaMode;
+    _value *= _direction;
 
     if ( getSiUnits() )
         lcdReadout->display(QString::number(_value, 'f', 2));

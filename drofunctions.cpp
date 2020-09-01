@@ -65,6 +65,13 @@ void DROFunctions::handleStopFunc(QString msg)
     _curFunction = -1;
     _curIndex = 0;
     _funcTempValues->clear();
+
+    foreach ( const QString axisName, settings->axisNames() ) {
+        if ( axisReadouts->value(axisName)->getSelected() ) {
+            axisReadouts->value(axisName)->setSelected(false);
+        }
+    }
+
     emit message(msg);
 }
 

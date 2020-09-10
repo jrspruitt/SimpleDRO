@@ -10,6 +10,16 @@ DROSettings::~DROSettings()
 
 }
 
+void DROSettings::setUiUnits(bool isSi)
+{
+    setKeyValue(SIMPLEDRO_CONFIG, "UiUnits", isSi);
+}
+
+bool DROSettings::getUiUnits()
+{
+    return getValue(SIMPLEDRO_CONFIG, "UiUnits", true).toBool();
+}
+
 void DROSettings::setHwInfSerialName(QString name)
 {
     setKeyValue(SIMPLEDRO_CONFIG, "hwInfSerialName", name);

@@ -1,7 +1,12 @@
 #ifndef SIMPLEDRO_H
 #define SIMPLEDRO_H
 
+#ifdef DESKTOP
+#include "dummyinf.h"
+#else
 #include "hardwareinf.h"
+#endif
+
 #include "axis.h"
 #include "drosettings.h"
 #include "drofunctions.h"
@@ -25,7 +30,6 @@ private:
     DROFunctions                        *droFunctions;
     QHash<QString, Axis *>              *axisReadouts;
     QPushButton                         *btnSiUnits;
-    bool                                isSiUnits = true;
     void                                enableHwInfAxes();
     void                                configureAxes();
 

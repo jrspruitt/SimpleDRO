@@ -2,7 +2,11 @@
 #define HWINFSETTINGS_H
 
 #include "drosettings.h"
+#ifdef DESKTOP
+#include "dummyinf.h"
+#else
 #include "hardwareinf.h"
+#endif
 #include "QAppWidgets/qappwindow.h"
 #include "QAppWidgets/qapplist.h"
 #include <QObject>

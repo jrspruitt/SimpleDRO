@@ -2,7 +2,6 @@
 #define AXIS_H
 
 #include "drosettings.h"
-#include "hardwareinf.h"
 #include <QObject>
 #include <QLCDNumber>
 #include <QWidget>
@@ -12,7 +11,7 @@ class Axis : public QObject
 {
     Q_OBJECT
 public:
-    explicit Axis(QString axisName, QObject *parent = nullptr);
+    explicit Axis(QString axisName, DROSettings *settings, QObject *parent = nullptr);
     QWidget*        axisReadout();
     QString         getName();
     void            setValue(double value);
@@ -27,12 +26,16 @@ public:
     void            setDisabled(bool disabled);
     void            setRevDirection(bool revDirection);
     void            setDiameterMode(bool isDiaMode);
+    void            setHardwareSiUnits(bool isHardwareSiUnits);
+    bool            getHardwareSiUnits();
     void            setSiUnits(bool isSiUnits);
     bool            getSiUnits();
+    double          unitConversion(double value);
     void            show();
     void            hide();
 
 private:
+    DROSettings     *settings;
     QLCDNumber      *lcdReadout;
     QPushButton     *btnZero;
     QPushButton     *btnSelect;
@@ -42,6 +45,7 @@ private:
     double          _absValue = 0;
     double          _zero = 0;
     double          _offset = 0;
+    bool            _isHardwareSiUnits = true;
     bool            _isSiUnits = true;
     bool            _isSelected = false;
     bool            _isDisabled = true;

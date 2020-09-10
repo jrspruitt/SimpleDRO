@@ -4,8 +4,8 @@
 #include <QObject>
 #include "QAppWidgets/qappbasesettings.h"
 
-#define UNITS_IMP               "in"
 #define UNITS_SI                "mm"
+#define UNITS_IMP               "in"
 
 #define DROFUNC_OFFSETS         "DROFunc_Offsets"
 #define SIMPLEDRO_CONFIG        "SimpleDRO"
@@ -19,10 +19,12 @@ class DROSettings : public QAppBaseSettings
 public:
     DROSettings(QString settingsPath="");
     ~DROSettings();
-    QString                 getHwInfSerialName();
+    void                    setUiUnits(bool isSi);
+    bool                    getUiUnits();
     void                    setHwInfSerialName(QString name);
-    int                     getHwInfSerialBaudRate();
+    QString                 getHwInfSerialName();
     void                    setHwInfSerialBaudRate(int baudRate);
+    int                     getHwInfSerialBaudRate();
     void                    setAxisEnabled(QString axisName, bool enabled);
     bool                    getAxisEnabled(QString axisName);
     QStringList             axisNames();

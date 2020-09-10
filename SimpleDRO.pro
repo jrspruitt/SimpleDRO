@@ -11,11 +11,9 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = SimpleDRO
 TEMPLATE = app
 
-
 SOURCES += \
         main.cpp \
         simpledro.cpp \
-        hardwareinf.cpp \
         axis.cpp \
         drosettings.cpp \
         dronumkeypad.cpp \
@@ -28,11 +26,11 @@ SOURCES += \
         QAppWidgets/qappfiledialog.cpp \
         QAppWidgets/qappinfodialog.cpp \
         QAppWidgets/qapplist.cpp \
-        QAppWidgets/qappwindow.cpp
+        QAppWidgets/qappwindow.cpp \
+
 
 HEADERS += \
         simpledro.h \
-        hardwareinf.h \
         axis.h \
         drosettings.h \
         dronumkeypad.h \
@@ -45,6 +43,18 @@ HEADERS += \
         QAppWidgets/qappfiledialog.h \
         QAppWidgets/qappinfodialog.h \
         QAppWidgets/qapplist.h \
-        QAppWidgets/qappwindow.h 
+        QAppWidgets/qappwindow.h \
+
+DESKTOP {
+DEFINES += DESKTOP
+SOURCES += dummyinf.cpp
+HEADERS += dummyinf.h
+}
+
+MINI210 {
+DEFINES += MINI210
+SOURCES += hardwareinf.cpp
+HEADERS += hardwareinf.h
 target.path = /root
 INSTALLS += target
+}

@@ -1,13 +1,15 @@
 #include "axis.h"
-#include "hardwareinf.h"
-#include "drosettings.h"
 
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QDebug>
-Axis::Axis(QString axisName, QObject *parent) : QObject(parent)
+Axis::Axis(QString axisName, DROSettings *settings, QObject *parent) : QObject(parent)
 {
     this->_axisName = axisName;
+    this->settings = settings;
+    setDiameterMode(settings->getAxisDiameterMode(axisName));
+    setRevDirection(settings->getAxisRevDirection(axisName));
+    setSiUnits(settings->getUiUnits());
 }
 
 QString Axis::getName()
@@ -78,16 +80,6 @@ bool Axis::getDisabled()
     return _isDisabled;
 }
 
-void Axis::setSiUnits(bool isSiUnits)
-{
-    _isSiUnits = isSiUnits;
-}
-
-bool Axis::getSiUnits()
-{
-    return _isSiUnits;
-}
-
 void Axis::setSelected(bool selected)
 {
     _isSelected = selected;
@@ -101,11 +93,70 @@ bool Axis::getSelected()
 }
 
 /*
+ * Unit conversions and properties.
+ * On change convert offset and zero, let next update
+ * deal with value.
+ */
+void Axis::setHardwareSiUnits(bool isHardwareSiUnits)
+{
+    if ( _isHardwareSiUnits != isHardwareSiUnits ) {
+        if ( isHardwareSiUnits ) {
+            _offset *= 25.4;
+            _zero *= 25.4;
+
+        } else {
+            _offset /= 25.4;
+            _zero /= 25.4;
+        }
+
+        _isHardwareSiUnits = isHardwareSiUnits;
+    }
+}
+
+bool Axis::getHardwareSiUnits()
+{
+    return _isHardwareSiUnits;
+}
+
+void Axis::setSiUnits(bool isSiUnits)
+{
+    if ( _isSiUnits != isSiUnits ) {
+        if ( isSiUnits ) {
+            _offset *= 25.4;
+            _zero *= 25.4;
+
+        } else {
+            _offset /= 25.4;
+            _zero /= 25.4;
+        }
+
+        _isSiUnits = isSiUnits;
+    }
+}
+
+bool Axis::getSiUnits()
+{
+    return _isSiUnits;
+}
+
+double Axis::unitConversion(double value)
+{
+    if ( getSiUnits() == getHardwareSiUnits() )
+        return value;
+
+    if ( ! getHardwareSiUnits() )
+        return value * 25.4;
+    else
+         return value / 25.4;
+}
+
+/*
  * Value settings.
  */
 
 void Axis::setValue(double value)
 {
+    value = unitConversion(value);
     _absValue = value;
 
     if ( getSelected() )
@@ -131,7 +182,8 @@ double Axis::getValue()
 
 void Axis::setZero(double value)
 {
-    _zero = getAbsValue() - (value * _diaMode * _direction);
+    value = unitConversion(value);
+    _zero = getAbsValue() - (value / _diaMode * _direction);
 }
 
 double Axis::getZero()
@@ -141,7 +193,8 @@ double Axis::getZero()
 
 void Axis::setOffset(double value)
 {
-    _offset = value * _diaMode * _direction;
+    value = unitConversion(value);
+    _offset = value;
 }
 
 double Axis::getAbsValue()

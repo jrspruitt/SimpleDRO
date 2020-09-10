@@ -28,7 +28,7 @@ SimpleDRO::SimpleDRO(QString skinName, QWidget *parent) :
 
     axisReadouts = new QHash<QString, Axis *>;
     foreach ( const QString axisName, settings->axisNames() )
-        axisReadouts->insert(axisName, new Axis(axisName));
+        axisReadouts->insert(axisName, new Axis(axisName, settings));
 
     createUi();
 
@@ -84,7 +84,7 @@ void SimpleDRO::createUi()
     connect(btnClose, SIGNAL(clicked()), this, SLOT(handleExit()));
     menuLayout->addWidget(btnClose);
 
-    btnSiUnits = new QPushButton("Si Units");
+    btnSiUnits = new QPushButton(settings->getUiUnits() ? "Si Units" : "Imp Units");
     btnSiUnits->setFocusPolicy(Qt::NoFocus);
     btnSiUnits->setProperty("class", "MenuButton");
     connect(btnSiUnits, SIGNAL(clicked()), this, SLOT(handleSiUnits()));
@@ -105,13 +105,7 @@ void SimpleDRO::createUi()
 void SimpleDRO::updateDro(QString name, bool on, double value, QString units)
 {
     axisReadouts->value(name)->setDisabled(!on);
-
-    if ( units.compare(UNITS_SI) == 0 && !isSiUnits )
-        value = value / 25.4;
-    else if ( units.compare(UNITS_IMP) == 0 && isSiUnits )
-        value = 25.4 * value;
-
-    axisReadouts->value(name)->setSiUnits(isSiUnits);
+    axisReadouts->value(name)->setHardwareSiUnits(units.compare(UNITS_SI) == 0 ? true: false);
     axisReadouts->value(name)->setValue(value);
 }
 
@@ -198,8 +192,12 @@ void SimpleDRO::handleHwConfig()
 
 void SimpleDRO::handleSiUnits()
 {
-    isSiUnits = !isSiUnits;
-    if ( isSiUnits )
+    settings->setUiUnits(! settings->getUiUnits());
+
+    foreach ( const QString axisName, settings->axisNames() )
+        axisReadouts->value(axisName)->setSiUnits(settings->getUiUnits());
+
+    if ( settings->getUiUnits() )
         btnSiUnits->setText("Si Units");
     else
         btnSiUnits->setText("Imp Units");

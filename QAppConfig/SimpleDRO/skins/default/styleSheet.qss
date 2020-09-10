@@ -9,28 +9,47 @@ QLCDNumber {
     border: 1px solid rgb(128, 128, 128);
 }
 
-DRONumKeypad QPushButton {
-    color: rgb(0, 0, 0);
-    background-color:rgb(255, 0, 0);
+DROFunctions QPushButton {
+    color: rgb(255, 255, 255);
+    background-color:rgb(128, 0, 0);
     border:1px solid rgb(255, 255, 255);
     border-radius:3px;
-    margin:1px;
+    margin:5px;
+    padding: 5px;
+}
+
+DRONumKeypad QPushButton {
+    color: rgb(255, 255, 255);
+    background-color:rgb(128, 128, 128);
+    border:1px solid rgb(255, 255, 255);
+    border-radius:3px;
+    margin-left:3px;
+    padding:5px;
 }
 
 DRONumKeypad QPushButton::released {
-    color: rgb(0, 0, 0);
-    background-color:rgb(255, 0, 0);
+    color: rgb(255, 255, 255);
+    background-color:rgb(128, 128, 255);
     border:1px solid rgb(255, 255, 255);
     border-radius:3px;
     margin:1px;
 }
 
 DRONumKeypad QPushButton::hover {
-    color: rgb(0, 0, 0);
-    background-color:rgb(255, 50, 50);
-    border:1px solid rgb(255, 255, 255);
+    color: rgb(255, 255, 255);
+    background-color:rgb(10, 8, 10);
+    border:1px solid rgb(30, 30, 30);
     border-radius:3px;
     margin:1px;
+}
+
+.MenuButton {
+    color: rgb(255, 255, 255);
+    background-color:rgb(30, 30, 30);
+    border:1px solid rgb(255, 255, 255);
+    border-radius:3px;
+    margin-left:3px;
+    padding:5px;
 }
 
 /* ---------------------- */
@@ -42,7 +61,7 @@ QAppList * {
     background-color: rgb(0, 0, 0);
     border:2px solid rgb(30, 30, 30);
     border-radius:5px;
-    font-size:24px;
+    font-size:32px;
 }
 
 QAppList QPushButton {

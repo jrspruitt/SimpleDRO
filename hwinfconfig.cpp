@@ -1,6 +1,5 @@
 #include "hwinfconfig.h"
 #include "drosettings.h"
-#include "hardwareinf.h"
 #include "QAppWidgets/qapplist.h"
 
 #include <QHBoxLayout>
@@ -12,6 +11,7 @@
 #include <QButtonGroup>
 #include <QSerialPortInfo>
 #include <QDebug>
+
 HwInfConfig::HwInfConfig(DROSettings *settings, HardwareInf *hwInf, QWidget *parent)
     :QAppWindow(parent, settings)
 {

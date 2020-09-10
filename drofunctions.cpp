@@ -132,7 +132,7 @@ void DROFunctions::handleFuncHalf()
     case 1:
         foreach ( const QString axisName, settings->axisNames() ) {
             if ( axisReadouts->value(axisName)->getSelected() ) {
-                tmpVal.insert(axisName, axisReadouts->value(axisName)->getAbsValue());
+                tmpVal.insert(axisName, axisReadouts->value(axisName)->getValue());
                 axisReadouts->value(axisName)->setSelected(false);
             }
         }
@@ -146,7 +146,7 @@ void DROFunctions::handleFuncHalf()
         foreach ( const QString axisName, settings->axisNames() ) {
             if ( axisReadouts->value(axisName)->getSelected() ) {
                 double arg1 = _funcTempValues->at(0).value(axisName);
-                double arg2 = axisReadouts->value(axisName)->getAbsValue();
+                double arg2 = axisReadouts->value(axisName)->getValue();
                 double offset = (arg1 + arg2) / 2.0;
                 axisReadouts->value(axisName)->setZero(offset);
                 axisReadouts->value(axisName)->setSelected(false);

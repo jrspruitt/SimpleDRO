@@ -30,8 +30,6 @@ bool HardwareInf::startHardware()
 
     try {
         handleStateChange(STATE_CONNECTING);
-        qDebug() << "Starting" << endl;
-        qDebug() << _curState << endl;
         start();
         return true;
 
@@ -86,7 +84,6 @@ void HardwareInf::run()
     while( !_stopHardware ) {
         switch ( _curState ) {
         case STATE_CONNECTING:
-            qDebug() << "CONNECTING" << endl;
             handleStateChange(STATE_RUNNING);
             break;
 
@@ -97,7 +94,8 @@ void HardwareInf::run()
                 qDebug() << "Failed to open file." << endl;
                 //handleStateChange(STATE_STOPPED);
             }
-
+            struct timespec ts = {1000 / 1000, (1000 % 1000) * 1000 * 1000};
+            nanosleep(&ts, nullptr);
             QTextStream inpStream(&inpFile);
             QString rawData = inpStream.readLine();
 

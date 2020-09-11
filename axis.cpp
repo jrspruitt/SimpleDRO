@@ -99,6 +99,7 @@ bool Axis::getSelected()
  */
 void Axis::setHardwareSiUnits(bool isHardwareSiUnits)
 {
+    /*
     if ( _isHardwareSiUnits != isHardwareSiUnits ) {
         if ( isHardwareSiUnits ) {
             _offset *= 25.4;
@@ -108,9 +109,9 @@ void Axis::setHardwareSiUnits(bool isHardwareSiUnits)
             _offset /= 25.4;
             _zero /= 25.4;
         }
-
+*/
         _isHardwareSiUnits = isHardwareSiUnits;
-    }
+    //}
 }
 
 bool Axis::getHardwareSiUnits()
@@ -144,10 +145,14 @@ double Axis::unitConversion(double value)
     if ( getSiUnits() == getHardwareSiUnits() )
         return value;
 
-    if ( ! getHardwareSiUnits() )
-        return value * 25.4;
+    else if ( getHardwareSiUnits() && ! getSiUnits() )
+        return value / 25.4;
+
+    else if ( ! getHardwareSiUnits() && getSiUnits() )
+         return value * 25.4;
+
     else
-         return value / 25.4;
+        return value; // Should not get here.
 }
 
 /*
@@ -182,7 +187,6 @@ double Axis::getValue()
 
 void Axis::setZero(double value)
 {
-    value = unitConversion(value);
     _zero = getAbsValue() - (value / _diaMode * _direction);
 }
 
@@ -193,7 +197,6 @@ double Axis::getZero()
 
 void Axis::setOffset(double value)
 {
-    value = unitConversion(value);
     _offset = value;
 }
 

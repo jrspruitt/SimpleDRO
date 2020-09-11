@@ -45,7 +45,7 @@ private:
     double          _absValue = 0;
     double          _zero = 0;
     double          _offset = 0;
-    bool            _isHardwareSiUnits = true;
+    bool            _isHardwareSiUnits;
     bool            _isSiUnits = true;
     bool            _isSelected = false;
     bool            _isDisabled = true;
